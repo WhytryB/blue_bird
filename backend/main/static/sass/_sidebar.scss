@@ -1,0 +1,79 @@
+/************Sidebar***************/
+.sidebar-wrapper {
+    width: 300px;
+    background-color: $lightdark;
+    position: fixed;
+    left: 0;
+    top: 0;
+    margin-top: 69px;
+    height: calc(100vh - 68px);
+    overflow-x: auto;
+    z-index: 9999;
+    scrollbar-width: thin;
+    @include transition(.5s);
+    .sidebar-links {
+        .side-nav {
+            list-style: none;
+            padding: 0;
+            margin: 10px 0;
+            li {
+                a {
+                    color: $white;
+                    display: block;
+                    padding: 11px 15px;
+                    font-size: 15px;
+                    > i:first-child {
+                        font-size: 18px;
+                        margin-right: 10px;
+                    }
+                    .fa-angle-down {
+                        transform: rotate(-90deg);
+                        -webkit-transform: rotate(-90deg);
+                        -moz-transform: rotate(-90deg);
+                        @include transition(.3s);
+                    }
+                    &.menu-open {
+                        .fa-angle-down {
+                            transform: rotate(0);
+                            -webkit-transform: rotate(0);
+                            -moz-transform: rotate(0);
+                        }
+                    }
+                    &:hover {
+                        background-color: $dark;
+                    }
+                }
+                .submenu {
+                    list-style: none;
+                    margin-bottom: 0;
+                    padding-left: 0;
+                    background-color: $dark;
+                    overflow: hidden;
+                    display: none;
+                    li {
+                        a {
+                            text-indent: 1.5rem;
+                            padding: 6px 15px;
+                            &:hover {
+                                background-color: $lightdark;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+.sidebar-off {
+    main {
+        margin-left: 0;
+    }
+    .sidebar-wrapper {
+        left: -300px;
+    }
+    footer {
+        left: 0;
+        width: 100%;
+    }
+}

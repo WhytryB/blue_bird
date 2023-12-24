@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{% endblock %}</title>
+
+    <!--Stylesheets-->
+    <link rel="stylesheet" href="../static/css/plugins/bootstrap.min.css">
+    <link rel="stylesheet" href="../static/css/plugins/fontawesome.min.css">
+    <link rel="stylesheet" href="../static/css/style.css">
+    {% block extra_styles %}
+
+    {% endblock %}
+
+</head>
+<body>
+
+<div class="wrapper">
+    <header class="top-header bg-light">
+        <!--Logo Here-->
+        <div class="logobar">
+            <h1 class="logo" style="width: 80%">
+                <select class="form-select font-weight-bold" id="exampleSelect" style="background-color: #3c4e62; color: white;">
+                    <option class="form-select font-weight-bold">СИНІЙ ПТАХ</option>
+                    <option class="form-select font-weight-bold">Інший</option>
+                    <!-- Добавьте дополнительные опции по вашему выбору -->
+                </select>
+            </h1>
+            <span class="toggle-bar float-end"><i class="fa-solid fa-bars-staggered"></i></span>
+        </div>
+        <div class="head-content">
+            <!--Notification Toggle Start-->
+            <div class="nofications toggle-item d-md-block d-none">
+                <div class="dropdown">
+                    <a class="icon" href="#" id="nofications" data-bs-toggle="dropdown">
+                        <i class="fa-regular fa-bell"></i>
+                        <span>5</span>
+                    </a>
+                    <ul class="dropdown-menu notification-list shadow" aria-labelledby="nofications">
+                        <div class="dropdown-header bg-secondary">
+                            <strong class="text-white">0 New Notification</strong>
+                        </div>
+                        <!--Notification Item Start-->
+                        <li>
+                            <a class="dropdown-item" href="#">
+                                <div class="notification-item">
+                                    <div class="icon">
+                                        <i class="fa-solid fa-bullhorn"></i>
+                                    </div>
+                                    <div class="content">
+                                        <strong>New Notification</strong>
+                                        <span class="float-end">2 days ago</span>
+                                        <p>Quis quam saepe blandi tiis simil...</p>
+                                    </div>
+                                </div>
+                            </a>
+                        </li>
+                        <!--Notification Item End-->
+
+                        <!--Notification Item Start-->
+                        <li>
+                            <a class="dropdown-item" href="#">
+                                <div class="notification-item">
+                                    <div class="icon">
+                                        <i class="fa-solid fa-bullhorn"></i>
+                                    </div>
+                                    <div class="content">
+                                        <strong>New Notification</strong>
+                                        <span class="float-end">5 days ago</span>
+                                        <p>Elige ndi amet non tenetur porro...</p>
+                                    </div>
+                                </div>
+                            </a>
+                        </li>
+                        <!--Notification Item End-->
+
+                        <!--Notification Item Start-->
+                        <li>
+                            <a class="dropdown-item" href="#">
+                                <div class="notification-item">
+                                    <div class="icon">
+                                        <i class="fa-solid fa-bullhorn"></i>
+                                    </div>
+                                    <div class="content">
+                                        <strong>New Notification</strong>
+                                        <span class="float-end">6 days ago</span>
+                                        <p>Assu menda ducimus nemo laudan...</p>
+                                    </div>
+                                </div>
+                            </a>
+                        </li>
+                        <!--Notification Item End-->
+
+                        <!--Notification Item Start-->
+                        <li>
+                            <a class="dropdown-item" href="#">
+                                <div class="notification-item">
+                                    <div class="icon">
+                                        <i class="fa-solid fa-bullhorn"></i>
+                                    </div>
+                                    <div class="content">
+                                        <strong>New Notification</strong>
+                                        <span class="float-end">12 days ago</span>
+                                        <p>Asper iores pariatur disti nctio...</p>
+                                    </div>
+                                </div>
+                            </a>
+                        </li>
+                        <!--Notification Item End-->
+
+                        <!--Notification Item Start-->
+                        <li>
+                            <a class="dropdown-item" href="#">
+                                <div class="notification-item">
+                                    <div class="icon">
+                                        <i class="fa-solid fa-bullhorn"></i>
+                                    </div>
+                                    <div class="content">
+                                        <strong>New Notification</strong>
+                                        <span class="float-end">20 days ago</span>
+                                        <p>Dolor sit afrg amet conse ctetur...</p>
+                                    </div>
+                                </div>
+                            </a>
+                        </li>
+                        <!--Notification Item End-->
+                    </ul>
+                </div>
+            </div>
+            <!--Notification Toggle End-->
+
+            <!--Message Toggle Start-->
+
+            <!--Message Toggle End-->
+
+            <!--User Info Toggle Start-->
+            <div class="current-user toggle-item">
+                <div class="dropdown">
+                    <a href="#" id="current_user" data-bs-toggle="dropdown">
+                        {% if request.user.profile_picture %}
+                        <img  class="img-40px circle" src="{{ request.user.profile_picture.url }}" alt="{{ request.user }}">
+                        {% else %}
+                        <!-- По умолчанию, если нет фотографии -->
+                        <img class="img-40px circle" src="../static/img/user1.png" alt="Image">
+                        {% endif %}
+
+                    </a>
+                    <ul class="dropdown-menu shadow" aria-labelledby="current_user">
+                        <li><a class="dropdown-item" href="/profile">Профіль</a></li>
+                        <form method="post" action="{% url 'logout' %}">
+                            {% csrf_token %}
+                            <li><button class="dropdown-item" type="submit">Вийти</button></li>
+                        </form>
+                    </ul>
+                </div>
+            </div>
+            <!--User Info Toggle End-->
+        </div>
+    </header>
+    <!--Sidebar Start-->
+    <div class="sidebar-wrapper">
+        <div class="sidebar">
+            <!--Profile Card Start-->
+            <div class="user-profile">
+                <div class="user-thumb">
+                    {% if request.user.profile_picture %}
+                        <img  class="img-80px circle" src="{{ request.user.profile_picture.url }}" alt="{{ request.user }}">
+                    {% else %}
+                    <!-- По умолчанию, если нет фотографии -->
+                        <img class="img-80px circle" src="../static/img/user1.png" alt="Image">
+                    {% endif %}
+
+                </div>
+                <div class="user-info">
+                    {% if request.user.is_authenticated %}
+                    <span>{{ request.user }}</span>
+                    {% else %}
+                    <p></p>
+                    {% endif %}
+
+                    <a href="/profile" class="btn btn-sm btn-primary">Редагувати профіль</a>
+                </div>
+            </div>
+            <!--Profile Card End-->
+            <div class="sidebar-links">
+                <ul class="side-nav">
+                    <li><a  href="/"><i class="fa-solid fa-gauge-high icon-navbar"></i>Головна</a></li>
+                    <li><a  href="/counters"><i class="fa-solid fa-calculator icon-navbar"></i>Лічильники</a></li>
+                    <li><a  href="/cars"><i class="fa-solid fa-car icon-navbar"></i>Автомібіль</a></li>
+                    <li><a  href="/vote"><i class="fa-solid fa-check-to-slot icon-navbar"></i>Голосування</a></li>
+                    <li><a  href="/archive"><i class="fa-solid fa-archive icon-navbar"></i>Архів</a></li>
+                    <li><a  href="/info"><i class="fa-solid fa-info icon-navbar"></i>Інформація</a></li>
+                    <li><a  href="/docs"><i class="fa-solid fa-book icon-navbar"></i>Документація </a></li>
+                    <li><a  href="/support"><i class="fa-solid fa-life-ring icon-navbar"></i>Саппорт </a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+{% block content %} {% endblock %}
+</div>
+
+<!--Scripts-->
+<script src="../static/js/plugins/jquery.min.js"></script>
+<script src="../static/js/plugins/jquery-ui.min.js"></script>
+<script src="../static/js/plugins/bootstrap.min.js"></script>
+<script src="../static/js/custom.js"></script>
+
+{% block scripts %} {% endblock %}
+</body>
+</html>

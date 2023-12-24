@@ -1,0 +1,168 @@
+/************Default Styles***************/
+
+@import url('https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,300;0,400;0,700;0,900;1,300;1,400;1,700;1,900&display=swap');
+
+
+
+// Sizes
+
+$text-font-size : 16px;
+$head-font-size: 23px;
+
+@import 'mixins';
+@import 'images';
+@import 'fonts';
+@import 'spacing';
+@import 'colors';
+@import 'overrides';
+
+* {
+  box-sizing: border-box;
+}
+
+body,
+html {
+  margin: 0;
+  padding: 0;
+  background-color: $bodybg;
+  font-family: 'Lato', sans-serif;
+}
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  margin-bottom: 0;
+}
+table {
+  th,
+  td {
+    vertical-align: middle;
+  }
+  td {
+    color: $lightdark;
+  }
+}
+a {
+  text-decoration: none;
+  display: inline-block;
+  @include transition(.2s);
+}
+p {
+  margin-bottom: 0;
+  color: lighten( $lightdark, 10);
+}
+main {
+  margin-left: 300px;
+  margin-top: 70px;
+  padding: 30px 30px 80px 30px;
+  @include transition(.5s);
+}
+footer {
+  position: fixed;
+  left: 300px;
+  bottom: 0;
+  width: 84%;
+  background-color: $white;
+  padding: 10px 0;
+  z-index: 100;
+  @include transition(.5s);
+  .copyright {
+    span {
+      color: $lightdark;
+      i {
+        font-size: 14px;
+      }
+    }
+  }
+}
+
+.auth-wrapper {
+  .logo {
+    a {
+      font-size: 35px;
+      text-transform: uppercase;
+      font-weight: bolder;
+      color: $dark;
+      span {
+        color: $primary;
+      }
+    }
+  }
+}
+
+.circle {
+  border-radius: 50px;
+}
+
+// Auth Form
+.auth-wrapper {
+  .align-items-center {
+    height: 100vh;
+  }
+  .card {
+    width: 500px;
+    .icon {
+      position: absolute;
+      bottom: 12px;
+      left: 14px;
+    }
+    .form-control {
+      padding-left: 35px;
+      &:focus {
+        @include box-shadow();
+      }
+    }
+  }
+}
+
+.social-auth {
+  .social-auth-head {
+    h5 {
+      font-size: 16px;
+      font-weight: bold;
+      text-align: center;
+      text-transform: uppercase;
+    }
+  }
+  ul {
+    margin: 1rem 0 0 0;
+    padding: 0;
+    li {
+      display: inline-block;
+      margin-right: 10px;
+      &:last-child {
+        margin-right: 0;
+      }
+      a {
+        font-size: 20px;
+        height: 40px;
+        width: 50px;
+        line-height: 2.1;
+        text-align: center;
+        background-color: $primary;
+        color: $white;
+        &:hover {
+          background-color: $dark;
+        }
+      }
+    }
+  }
+}
+
+.overlay {
+    position: relative;
+    z-index: 1;
+    &::after {
+        content: "";
+        background: $black none repeat scroll 0 0;
+        opacity: 0.5;
+        position: absolute;
+        height: 100%;
+        width: 100%;
+        left: 0;
+        top: 0;
+        z-index: -1;
+      }
+}

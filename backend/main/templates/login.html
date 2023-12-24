@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daktar - Hospital Managment HTML Template</title>
+
+    <!--Stylesheets-->
+    <link rel="stylesheet" href="../static/css/plugins/bootstrap.min.css">
+    <link rel="stylesheet" href="../static/css/plugins/fontawesome.min.css">
+    <link rel="stylesheet" href="../static/css/style.css">
+
+</head>
+<body>
+
+    <div class="auth-wrapper">
+        <div class="d-flex justify-content-center align-items-center">
+            <div class="card p-5">
+
+                <div class="logo font-weight-bold text-center"><p class="mb-30px text-center">Введіть свій Логін та Пароль</p></div>
+                <div class="auth-form">
+                    <form method="post">
+                        {% csrf_token %}
+
+                        <div class="mb-3 position-relative">
+                            <label for="{{ form.username.id_for_label }}" class="w-100">Логін:</label>
+                            <span class="icon"><i class="fa-regular fa-user"></i></span>
+                            {{ form.username }}
+                        </div>
+                        <div class="mb-2 position-relative">
+                            <label for="{{ form.password.id_for_label }}" class="w-100">Пароль:</label>
+                            <span class="icon"><i class="fa-solid fa-unlock-keyhole"></i></span>
+                            {{ form.password }}
+                        </div>
+                        <div class="form-check mb-3">
+                            {% if error %}
+                                <p style="color: red;">{{ error }}</p>
+                            {% endif %}
+                        </div>
+                        <div class="mb-3">
+                            <button type="submit" class="btn btn-primary w-100">Вхід в систему</button>
+                        </div>
+                    </form>
+
+                    <div class="social-auth mt-30px">
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!--Javascripts-->
+    <script src="../static/js/plugins/jquery.min.js"></script>
+    <script src="../static/js/plugins/bootstrap.min.js"></script>
+</body>
+</html>

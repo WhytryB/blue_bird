@@ -1,0 +1,12 @@
+# Changelog
+Thanks for purchasing our product. We have made the following changelog for you. So, keep updated on our products.
+
+## [1.0.0] - 03-12-2022
+- Initial version released.
+
+## [2.0.0] - 15-12-2022
+- Improved responsive design view
+
+## [3.0.0] - 27-08-2023
+- Added slider template.
+- Improved design elements.

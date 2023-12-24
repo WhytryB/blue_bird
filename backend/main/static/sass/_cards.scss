@@ -1,0 +1,21 @@
+// Cards
+.card {
+    @include transition(.3s);
+    margin-bottom: 1rem;
+    .card-img-top {
+        border-top-left-radius: 0 !important;
+        border-top-right-radius: 0 !important;
+    }
+    &.hovered {
+        &:hover {
+            @include box-shadow(rgba(0,0,0,.175), 1rem , 3rem);
+        }
+    }
+    &.rounded {
+        border-radius: 1rem !important;
+        .card-img-top {
+            border-top-left-radius: 1rem !important;
+            border-top-right-radius: 1rem !important;
+        }
+    }
+}

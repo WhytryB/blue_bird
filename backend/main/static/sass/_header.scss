@@ -1,0 +1,112 @@
+/************Header***************/
+.top-header {
+    display: flex;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 9999;
+    .logobar {
+        flex-basis: 354px;
+        padding: 10px 15px;
+        background-color: $lightdark;
+        .logo {
+            display: inline-block;
+            margin-bottom: 0;
+            a {
+                font-size: 30px;
+                font-weight: bold;
+                text-transform: uppercase;
+                color: $white;
+                vertical-align: middle;
+            }
+        }
+        .toggle-bar {
+            font-size: 22px;
+            display: inline-block;
+            cursor: pointer;
+            line-height: 2.3rem;
+            color: $white;
+        }
+    }
+    .head-content {
+        display: flex;
+        justify-content: right;
+        width: 100%;
+        padding: 10px 15px;
+        background-color: $lightdark;
+        .toggle-item {
+            margin-left: 20px;
+            line-height: 3rem;
+            &.nofications,
+            &.messages,
+            &.current-user {
+                a {
+                    color: $lightdark;
+                    padding: 0 1rem;
+                }
+                .icon {
+                    font-size: 20px;
+                    color: $darkwhite;
+                    position: relative;
+                    span {
+                        position: absolute;
+                        top: 8px;
+                        right: 3px;
+                        display: inline-block;
+                        background-color: $black;
+                        border-radius: 50%;
+                        padding: 0 5px;
+                        line-height: 1rem;
+                        font-size: 12px;
+                        font-weight: bold;
+                        color: $white;
+                    }
+                }
+                .dropdown-menu {
+                    border-radius: 0;
+                    padding: 0;
+                    top: 10px !important;
+                    border: none;
+                    &.message-list,
+                    &.notification-list {
+                        li {
+                            .dropdown-item {
+                                padding: 0 1rem;
+                                .message-item,
+                                .notification-item {
+                                    display: flex;
+                                    .icon {
+                                        color: $dark;
+                                        font-size: 30px;
+                                        margin-right: 10px;
+                                        margin-top: 5px;
+                                    }
+                                    .content {
+                                        line-height: 1rem;
+                                        font-size: 14px;
+                                        margin: 10px 0;
+                                        span {
+                                            font-style: italic;
+                                        }
+                                        p {
+                                            color: $lightdark;
+                                            margin-top: 5px;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    
+                    li {
+                        border-bottom: 1px solid $darkwhite;
+                        &:last-child {
+                            border-bottom: none;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

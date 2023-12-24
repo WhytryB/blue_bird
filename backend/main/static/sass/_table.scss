@@ -1,0 +1,18 @@
+/************Table***************/
+.table {
+	width: 100%;
+	.thead-dark {
+		th {
+			color: $white;
+			background-color: $dark;
+			border-color: $dark;
+		}
+	}
+	.thead-primary {
+		th {
+			color: $white;
+			background-color: $primary;
+			border-color: $primary;
+		}
+	}
+}

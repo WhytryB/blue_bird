@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+
+{% block title %}Cars{% endblock %}
+{% block extra_styles %}
+<link rel="stylesheet" href="../static/css/plugins/select2.min.css">
+{% endblock %}
+{% block content %}
+<main>
+    <div class="main-wrapper kwartira">
+
+        <div class="container-fluid">
+
+            <div class="card card p-20px mb-25px">
+                <div class="card-title text-uppercase font-weight-bold font-25px mb-30px">Створити тікет</div>
+                <form action="#">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="mb-3">
+                                <label >Категорія проблеми</label>
+                                <select class="select2">
+                                    <option value="1">проблема 1</option>
+                                    <option value="2">проблема 2</option>
+
+                                </select>
+                            </div>
+
+                        </div>
+
+                        <div class="col-md-12">
+                            <div class="mb-3">
+                                <label for="comments">Опис проблеми</label>
+                                <textarea name="comments" id="comments" class="form-control" placeholder="Опис"></textarea>
+                            </div>
+                        </div>
+                        <div class="col-md-12">
+                            <div class="mb-3">
+                                <button type="submit" class="btn btn-lg btn-dark">Створити</button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="container-fluid">
+
+            <div class="card card p-20px mb-25px">
+                <div class="card-title text-uppercase font-weight-bold font-25px mb-30px">Часті питання</div>
+                <h5 class="pb-1">1. Проблема: Відсутність гарячої води</h5>
+                <p class="pb-2"><strong>Рішення:</strong> Перевірте стан бойлера або сповістіть управляючу компанію про проблему. Можливо, необхідно провести ремонт або технічне обслуговування.</p>
+
+                <h5 class="pb-1">2. Проблема: Перебої з електропостачанням</h5>
+                <p class="pb-2"><strong>Рішення:</strong> Зв'яжіться з місцевим енергопостачальником для отримання інформації щодо перебоїв в електромережі. У разі технічних несправностей у будівлі, сповістіть управляючу компанію.</p>
+
+                <h5 class="pb-1">3. Проблема: Протікання у квартирі</h5>
+                <p class="pb-2"><strong>Рішення:</strong> Негайно повідомте управляючу компанію та виключте водопостачання до усунення несправності. Необхідно вжити невідкладних заходів для запобігання пошкодженням майна.</p>
+
+                <h5 class="pb-1">4. Проблема: Шум від сусідів</h5>
+                <p class="pb-2"><strong>Рішення:</strong> Спробуйте вирішити конфлікт за допомогою взаєморозуміння з сусідами. Якщо проблема не вирішується, повідомте управляючу компанію або користуйтеся механізмами житлового законодавства.</p>
+
+                <h5 class="pb-1">5. Проблема: Проблеми з опаленням</h5>
+                <p class="pb-2"><strong>Рішення:</strong> Перевірте роботу системи опалення, терморегуляторів та батарей. У випадку відсутності опалення, повідомте про це управляючу компанію для проведення ремонтних робіт.</p>
+
+                <h5 class="pb-1">6. Проблема: Затоплення в підвалі</h5>
+                <p class="pb-2"><strong>Рішення:</strong> Повідомте управляючу компанію про негайне виявлення затоплення та приймайте заходи для запобігання поширенню води та майнових збитків.</p>
+
+                <h5 class="pb-1">7. Проблема: Зміни в правилах користування будинком</h5>
+                <p class="pb-4"><strong>Рішення:</strong> Ознайомтеся з оновленими правилами користування будинком, які надсилаються управляючою компанією. У разі питань звертайтеся до служби підтримки.</p>
+
+
+                <p>Це лише загальні рекомендації, і кожна ситуація може вимагати індивідуального підходу. Для конкретних проблем звертайтеся до управляючої компанії або служб підтримки житлового комплексу.</p>
+
+
+            </div>
+        </div>
+    </div>
+</main>
+{% endblock %}
+{% block scripts %}
+<script src="../static/js/plugins/select2.min.js"></script>
+
+<script>
+    $(document).ready(function() {
+        $('.select2').select2({
+            placeholder: 'Виберіть рахунох',
+            dropdownPosition: 'below',
+
+        });
+    });
+</script>
+{% endblock %}

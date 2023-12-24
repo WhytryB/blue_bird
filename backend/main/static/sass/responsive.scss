@@ -1,0 +1,51 @@
+@media all and (max-width: 992px) {    
+    .sidebar-wrapper {
+        left: -300px;
+    }    
+    main {
+        margin-left: 0;
+    }
+    .sidebar-off {
+        .sidebar-wrapper {
+            left: 0;
+        }
+    }
+    footer {
+        position: fixed;
+        left: 0;
+        width: 100%;
+        @include transition(.5s);
+        .copyright {
+          span {
+            color: $lightdark;
+            i {
+              font-size: 14px;
+            }
+          }
+        }
+    }
+}
+
+@media all and (max-width: 768px) {    
+    .sidebar-wrapper {
+        margin-top: 68px;
+    }
+}
+
+@media all and (max-width: 400px) {    
+    .sidebar-wrapper {
+        margin-top: 57px;
+    }
+    .top-header {
+        .logobar {
+            flex-basis: 480px;
+        }
+        .head-content {
+            padding: 0;
+        }
+    }
+
+    .top-header .head-content .toggle-item.nofications .dropdown-menu, .top-header .head-content .toggle-item.messages .dropdown-menu, .top-header .head-content .toggle-item.current-user .dropdown-menu {
+        top: 7px !important;
+    }
+}

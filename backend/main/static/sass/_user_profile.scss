@@ -1,0 +1,17 @@
+/************User Profile***************/
+.user-profile {
+    display: flex;
+    padding: 1rem;
+    background-color: $dark;
+    .user-thumb {
+        margin-right: 15px;
+    }
+    .user-info {
+        span {
+            display: block;
+            font-weight: 600;
+            color: $white;
+            margin: .5rem 0;
+        }
+    }
+}

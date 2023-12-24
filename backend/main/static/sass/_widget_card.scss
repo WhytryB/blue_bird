@@ -1,0 +1,15 @@
+/************Widget Card***************/
+.widget-card {
+    background-color: $white;
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+    .widget-card-wrapper {
+        padding: 1rem;
+    }
+    svg {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+    }
+}

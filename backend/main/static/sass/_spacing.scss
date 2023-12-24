@@ -1,0 +1,63 @@
+$margins: 5px, 10px, 15px, 20px, 25px, 30px, 35px, 40px, 45px, 50px, 55px, 60px, 65px, 70px, 75px, 80px, 85px, 90px, 95px, 100px;
+$paddings: 5px, 10px, 15px, 20px, 25px, 30px, 35px, 40px, 45px, 50px, 55px, 60px, 65px, 70px, 75px, 80px, 85px, 90px, 95px, 100px;
+
+// Margins
+@each $margin in $margins {
+    .m-#{$margin} {
+      margin: $margin !important;
+    }
+  }
+  
+  @each $margin in $margins {
+    .mt-#{$margin} {
+      margin-top: $margin !important;
+    }
+  }
+  
+  @each $margin in $margins {
+    .mb-#{$margin} {
+      margin-bottom: $margin !important;
+    }
+  }
+  
+  @each $margin in $margins {
+    .ml-#{$margin} {
+      margin-left: $margin !important;
+    }
+  }
+  
+  @each $margin in $margins {
+    .mr-#{$margin} {
+      margin-right: $margin !important;
+    }
+  }
+  // Paddings
+  @each $padding in $paddings {
+    .p-#{$padding} {
+      padding: $padding !important;
+    }
+  }
+  
+  @each $padding in $paddings {
+    .pt-#{$padding} {
+      padding-top: $padding !important;
+    }
+  }
+  
+  @each $padding in $paddings {
+    .pb-#{$padding} {
+      padding-bottom: $padding !important;
+    }
+  }
+  
+  @each $padding in $paddings {
+    .pl-#{$padding} {
+      padding-left: $padding !important;
+    }
+  }
+  
+  @each $padding in $paddings {
+    .pr-#{$padding} {
+      padding-right: $padding !important;
+    }
+  }

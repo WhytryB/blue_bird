@@ -1,0 +1,8 @@
+$imgsizes: 15px, 30px, 35px, 40px, 50px, 80px, 100px;
+
+@each $imgsize in $imgsizes {
+    .img-#{$imgsize} {
+      height: $imgsize;
+      width: $imgsize;
+    }
+  }

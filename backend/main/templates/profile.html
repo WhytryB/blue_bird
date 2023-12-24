@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+
+{% block title %}Profile{% endblock %}
+{% block extra_styles %}
+
+{% endblock %}
+{% block content %}
+
+<main>
+  <div class="main-wrapper">
+    <div class="container-fluid">
+
+      <div class="card card p-20px mb-25px">
+        <div class="card-title text-uppercase font-weight-bold font-25px mb-30px">ОНОВЛЕННЯ ПРОФІЛЮ</div>
+        <form method="POST" enctype="multipart/form-data">
+          {% csrf_token %}
+          <div class="row">
+            <div class="col-md-12">
+              <div class="mb-3">
+                <h4 class="card-title text-uppercase font-weight-bold font-14px mb-20px">Інформація про користувача</h4>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="{{ form.firstname.id_for_label }}">Ім'я <sup class="text-danger font-15px">*</sup></label>
+                {{ form.first_name }}
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="{{ form.lastname.id_for_label }}">Прізвище <sup class="text-danger font-15px">*</sup></label>
+                {{ form.last_name }}
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="{{ form.middle_name.id_for_label }}">По батькові <sup class="text-danger font-15px">*</sup></label>
+                {{ form.middle_name }}
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="{{ form.mobile.id_for_label }}">Мобільний <sup class="text-danger font-15px">*</sup></label>
+                {{ form.mobile }}
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="{{ form.email.id_for_label }}">Електронна пошта <sup class="text-danger font-15px">*</sup></label>
+                {{ form.email }}
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="{{ form.address.id_for_label }}">Адреса</label>
+                {{ form.address }}
+              </div>
+            </div>
+            <div class="col-md-12">
+              <div class="mb-3">
+                <label for="{{ form.profile_picture.id_for_label }}">Фотографія</label>
+                {{ form.profile_picture }}
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-12">
+              <div class="mb-3">
+                <h4 class="card-title text-uppercase font-weight-bold font-14px mt-20px mb-20px ">Змінити пароль</h4>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="old_password">Старий пароль <sup class="text-danger font-15px">*</sup></label>
+                <input type="password" id="old_password" name="old_password" class="form-control" placeholder="Пароль">
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="new_password">Новий пароль <sup class="text-danger font-15px">*</sup></label>
+                <input type="password" id="new_password" name="new_password" class="form-control" placeholder="Підтвердити пароль">
+              </div>
+            </div>
+
+            <div class="col-md-12">
+              {% if messages %}
+              <ul class="messages">
+                {% for message in messages %}
+                <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+                {% endfor %}
+              </ul>
+              {% endif %}
+              <div class="mb-3">
+                <button type="submit" class="btn btn-lg btn-dark">Оновити профіль</button>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</main>
+
+
+{% endblock %}
+{% block scripts %}
+
+
+<script>
+
+</script>
+{% endblock %}
