@@ -206,7 +206,15 @@
 <script src="../static/js/plugins/jquery-ui.min.js"></script>
 <script src="../static/js/plugins/bootstrap.min.js"></script>
 <script src="../static/js/custom.js"></script>
+<script>
+    function closeMessage(button) {
+        // Находим родительский элемент (сообщение) кнопки
+        var messageDiv = button.parentElement;
 
+        // Скрываем сообщение
+        messageDiv.style.display = 'none';
+    }
+</script>
 {% block scripts %} {% endblock %}
 </body>
 </html>

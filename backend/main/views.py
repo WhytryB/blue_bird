@@ -21,12 +21,18 @@ from django.views.decorators.debug import sensitive_post_parameters
 from django.views.generic import View, FormView
 from django.conf import settings
 from django.urls import reverse_lazy
+from django.db.models import Count
+from django.core.paginator import Paginator
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+import requests
+import json
 
 
 from .forms import (
     SignInViaUsernameForm, ChangeProfileForm
 )
-
+from .models import Poll, Choice, Vote
 
 class HomeView(LoginRequiredMixin, TemplateView):
     template_name = 'index.html'
@@ -45,9 +51,48 @@ class CarsView(LoginRequiredMixin, TemplateView):
     template_name = 'cars.html'
 
 
-class VoteView(LoginRequiredMixin, TemplateView):
-    template_name = 'vote.html'
+class VoteView(LoginRequiredMixin, View):
+     template_name = 'vote.html'
 
+     def get(self, request, *args, **kwargs):
+            all_polls = Poll.objects.all()
+            all_polls = all_polls.annotate(Count('vote')).order_by('-created_at')
+
+
+            paginator = Paginator(all_polls, 100)  # Show 6 contacts per page
+            page = request.GET.get('page')
+            polls = paginator.get_page(page)
+
+            get_dict_copy = request.GET.copy()
+            params = get_dict_copy.pop('page', True) and get_dict_copy.urlencode()
+
+            context = {
+                "last_poll": all_polls[0],
+                'polls': polls[1:],
+                'params': params
+            }
+            return render(request,  self.template_name, context)
+
+
+     def post(self, request, *args, **kwargs):
+            poll = Poll.objects.latest('created_at')
+            choice_id = request.POST.get('choice')
+            if not poll.user_can_vote(request.user):
+                messages.error(
+                    request, "Ви вже голосували в цьому опитуванні!", extra_tags='alert alert-warning alert-dismissible fade show')
+                return redirect("vote")
+
+            if choice_id:
+                choice = Choice.objects.get(id=choice_id)
+                vote = Vote(user=request.user, poll=poll, choice=choice)
+                vote.save()
+                print(vote)
+                return redirect("vote")
+            else:
+                messages.error(
+                    request, "Не вибрано жодного варіанту!", extra_tags='alert alert-warning alert-dismissible fade show')
+                return redirect("vote")
+            return redirect("vote")
 
 class ArchiveView(LoginRequiredMixin, TemplateView):
     template_name = 'archive.html'
@@ -168,3 +213,21 @@ class CustomLogoutMixin:
 class LogOutView(CustomLogoutMixin, BaseLogoutView):
     next_page = reverse_lazy('login')
 
+
+@csrf_exempt
+def execute_script(request):
+    # Перевірка, чи існує параметр request_id
+    request_id = request.GET.get('request_id')
+    if not request_id:
+        return JsonResponse({"error": "Unauthorized request"}, status=401)
+
+
+    # Виклик зовнішнього скрипта
+    try:
+        response = requests.get('https://example.com/external_script', params={'request_id': request_id})
+        response_data = response.json()
+        success = response_data.get('success', False)
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
+    return JsonResponse({"success": success}, status=200, safe=False)

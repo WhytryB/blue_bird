@@ -18,115 +18,84 @@
 
                 <div class="card card p-20px mb-25px">
                     <div class="card-title text-uppercase font-weight-bold font-25px mb-30px">
-                        <p class="pb-15px text-center mobile-font-size">Тема: Затвердити внески для нежитлових приміщень на управління житловим будинком ОСББ «СИНІЙ ПТАХ» - утримання та експлуатацію будинку, користування спільним майном): - для офісов – 6,95 грн за 1 м.кв. з підвищуючим коефіцієнтом 1,2; Вивіз ТПВ – для офісов -0,34 грн за 1 м.кв. з підвищуючим коефіцієнтом 1,5; Охорона – 4 грн. за 1 м.кв.
+                        <p class="pb-15px text-center mobile-font-size">{{last_poll.text}}
                         </p>
                     </div>
                     <div class="card-body">
-                        <div class="owl-carousel slider2">
+                        {% if last_poll.photos.all %}
+
+
+                        <div class="owl-carousel slider2 pb-15px">
                             <!-- Slide Item Start -->
+
+                            {% for photo in last_poll.photos.all %}
                             <div class="slide-item">
                                 <div class="card">
-                                    <img src="../static/img/cards/1.jpg" class="card-img-top" alt="Image">
+                                    <img src="{{ photo.photo.url }}" class="card-img-top" alt="Image">
                                     <div class="card-body">
-                                        <p class="card-text">Опис під фото</p>
+                                        <p class="card-title card-text">{{ photo.title }}</p>
+                                        <!--                                                                    <h5 class="card-title font-weight-bold">{{ photo.title }}</h5>-->
+                                        <!--                                                                    <p class="card-text">A configurable component for displaying tabular data.</p>-->
                                     </div>
                                 </div>
                             </div>
-                            <!-- Slide Item Start -->
+                            {% endfor %}
+                        </div>
 
-                            <!-- Slide Item Start -->
-                            <div class="slide-item">
-                                <div class="card">
-                                    <img src="../static/img/cards/2.jpg" class="card-img-top" alt="Image">
-                                    <div class="card-body">
+                        {% endif %}
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="centered-div pl-25px pr-25px">
+                                    <form action="{% url 'vote'  %}" class="poll-form" method="POST">
+                                        {% csrf_token %}
+                                        <h4 class="pt-30px pb-30px">Виберіть відповідь:</h4>
 
-                                        <p class="card-text">Опис під фото</p>
-                                    </div>
+
+                                        <!-- Опции голосования -->
+                                        {% for choice in last_poll.choice_set.all %}
+                                        <div class="poll-option font-18px pt-5px " style="text-align: left ; padding-left: 20%; padding-right: 10%">
+
+                                            <input style=" text-align: left;" type="radio" name="choice" id="choice{{ forloop.counter }}" value="{{ choice.id }}">
+                                            <label style=" text-align: left;" for="choice{{ forloop.counter }}">{{ choice.choice_text }}</label>
+
+                                            <br>
+
+
+                                        </div>
+                                        {% endfor %}
+
+                                        <!-- Кнопка для отправки голоса -->
+                                        <button style="max-width: 100%" type="submit" value="Vote" class="mobile-font-size-8 btn btn-lg btn-primary mt-30px mb-25px pl-30px pr-30px">Проголосувати</button>
+                                    </form>
                                 </div>
                             </div>
-                            <!-- Slide Item Start -->
+                            <div class="col-md-8">
+                                <div class="poll-container pt-30px">
+                                    <h3>Поточні результати голосування:</h3>
+                                    {% for choice in last_poll.get_result_dict %}
 
-                            <!-- Slide Item Start -->
-                            <div class="slide-item">
-                                <div class="card">
-                                    <img src="../static/img/cards/3.jpg" class="card-img-top" alt="Image">
-                                    <div class="card-body">
-                                        <p class="card-text">Опис під фото</p>
+                                    <div class="poll-option">
+                                        <span class="option-label">{{choice.text}}-{{choice.percentage|floatformat}}% {{ choice.get_vote_count }}</span>
+                                        <div class="progress-bar">
+                                            <div class="progress-bar-inner" style="width: {{ choice.percentage }}"></div>
+                                        </div>
                                     </div>
-                                </div>
-                            </div>
-                            <!-- Slide Item Start -->
-
-                            <!-- Slide Item Start -->
-                            <div class="slide-item">
-                                <div class="card">
-                                    <img src="../static/img/cards/4.jpg" class="card-img-top" alt="Image">
-                                    <div class="card-body">
-                                        <p class="card-text">Опис під фото</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <!-- Slide Item Start -->
-
-                            <!-- Slide Item Start -->
-                            <div class="slide-item">
-                                <div class="card">
-                                    <img src="../static/img/cards/5.jpg" class="card-img-top" alt="Image">
-                                    <div class="card-body">
-                                        <p class="card-text">Опис під фото</p>
-                                    </div>
+                                    {% endfor %}
                                 </div>
                             </div>
                         </div>
-
-
-                    <div class="centered-container pt-25px">
-                        <div class="centered-div pl-25px pr-25px">
-                            <form class="poll-form">
-                                <h4 class="pt-10px">Виберіть відповідь:</h4>
-                                <!-- Опции голосования -->
-                                <div class="poll-option font-18px pt-20px">
-                                    <input type="radio" name="pollOption" value="JavaScript"> первий
-                                </div>
-
-                                <div class="poll-option font-18px">
-                                    <input type="radio" name="pollOption" value="Python"> второй
-                                </div>
-
-                                <div class="poll-option font-18px">
-                                    <input type="radio" name="pollOption" value="Java"> третий
-                                </div>
-
-                                <!-- Кнопка для отправки голоса -->
-                                <button style="max-width: 100%" type="button" class="mobile-font-size-10 btn btn-lg btn-primary mt-30px mb-25px">Проголосувати</button>
-                            </form>
+                        {% if messages %}
+                        <div class="messages">
+                            {% for message in messages %}
+                            <div class="alert {% if message.tags %} alert-{{ message.tags }} {% endif %} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-dismiss="alert" aria-label="Close" onclick="closeMessage(this)">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            {% endfor %}
                         </div>
-                    </div>
-
-                <div class="poll-container">
-                    <h3>Поточні результати голосування:</h3>
-                    <div class="poll-option">
-                        <span class="option-label">первий</span>
-                        <div class="progress-bar">
-                            <div class="progress-bar-inner" style="width: 40%;"></div>
-                        </div>
-                    </div>
-
-                    <div class="poll-option">
-                        <span class="option-label">второй</span>
-                        <div class="progress-bar">
-                            <div class="progress-bar-inner" style="width: 30%;"></div>
-                        </div>
-                    </div>
-
-                    <div class="poll-option">
-                        <span class="option-label">третий</span>
-                        <div class="progress-bar">
-                            <div class="progress-bar-inner" style="width: 30%;"></div>
-                        </div>
-                    </div>
-
-                </div>
+                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -163,237 +132,79 @@
                         </tr>
                         </thead>
                         <tbody>
-                        <tr class=" collapsed"  data-bs-toggle="collapse" data-bs-target="#flush-collapseOne" aria-expanded="false" aria-controls="flush-collapseOne">
+                        {% for poll in polls %}
+
+                        <tr class=" collapsed"  data-bs-toggle="collapse" data-bs-target="#flush-collapse{{ forloop.counter }}" aria-expanded="false" aria-controls="flush-collapseOne">
 
                             <td class="font-14px">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="9" fill="currentColor" class="bi bi-chevron-down" viewBox="0 0 16 16">
                                     <path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z" />
                                 </svg>
-                                01
+                                {{ forloop.counter }}
+
                             </td>
-                            <td class=" p-4 pe-3 ps-0 text-center font-14px">Buy Machine</td>
-                            <td class="font-14px">Airi Satou</td>
-                            <td class="text-center "><span>Обрати головою загальних зборів ОСББ "Синій птах" Оносова Андрея, секретарем загальних зборів ОСББ "Синій птах" Циунчик Юлію</span></td>
+                            <td class=" p-4 pe-3 ps-0 text-center font-14px">{{ poll.created_at }}</td>
+                            <td class="font-14px">{{ poll.pub_date }}</td>
+                            <td class="text-center "><span>{{ poll.text }}</span></td>
 
                         </tr>
-                        <tr id="flush-collapseOne" class="accordion-collapse collapse" data-bs-parent="#accordionFlushExample" >
+                        <tr id="flush-collapse{{ forloop.counter }}" class="accordion-collapse collapse" data-bs-parent="#accordionFlushExample" >
                             <td colspan="4" >
 
                                 <div class="accordion-body">
 
                                     <div class="card-title text-uppercase font-weight-bold font-25px mb-30px">
-                                        <p class="font-25px pb-15px mobile-font-size">Затвердити внески для нежитлових приміщень на управління житловим будинком ОСББ «СИНІЙ ПТАХ» - утримання та експлуатацію будинку, користування спільним майном): - для офісов – 6,95 грн за 1 м.кв. з підвищуючим коефіцієнтом 1,2; Вивіз ТПВ – для офісов -0,34 грн за 1 м.кв. з підвищуючим коефіцієнтом 1,5; Охорона – 4 грн. за 1 м.кв.</p></div>
-
+                                        <p class="font-25px pb-15px mobile-font-size">{{ poll.text }}</p></div>
+                                        <h3 class="mb-2 text-center">Всього : {{ poll.get_vote_count }} голосів</h3>
                                         <div class="main-wrapper">
                                             <div class="container-fluid">
+
+
+                                                {% if poll.photos.all %}
+
+
+
                                                 <div class="owl-carousel slider3">
                                                     <!-- Slide Item Start -->
-                                                    <div class="slide-item">
-                                                        <div class="card">
-                                                            <img src="../static/img/cards/1.jpg" class="card-img-top" alt="Image">
-                                                            <div class="card-body">
-                                                                <h5 class="card-title font-weight-bold">Your title goes here</h5>
-                                                                <p class="card-text">A configurable component for displaying tabular data.</p>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <!-- Slide Item Start -->
 
-                                                    <!-- Slide Item Start -->
-                                                    <div class="slide-item">
-                                                        <div class="card">
-                                                            <img src="../static/img/cards/2.jpg" class="card-img-top" alt="Image">
-                                                            <div class="card-body">
-                                                                <h5 class="card-title font-weight-bold">Your title goes here</h5>
-                                                                <p class="card-text">A configurable component for displaying tabular data.</p>
+                                                    {% for photo in poll.photos.all %}
+                                                        <div class="slide-item">
+                                                            <div class="card">
+                                                                <img src="{{ photo.photo.url }}" class="card-img-top" alt="Image">
+                                                                <div class="card-body">
+                                                                    <p class="card-title card-text">{{ photo.title }}</p>
+<!--                                                                    <h5 class="card-title font-weight-bold">{{ photo.title }}</h5>-->
+<!--                                                                    <p class="card-text">A configurable component for displaying tabular data.</p>-->
+                                                                </div>
                                                             </div>
                                                         </div>
-                                                    </div>
-                                                    <!-- Slide Item Start -->
-
-                                                    <!-- Slide Item Start -->
-                                                    <div class="slide-item">
-                                                        <div class="card">
-                                                            <img src="../static/img/cards/3.jpg" class="card-img-top" alt="Image">
-                                                            <div class="card-body">
-                                                                <h5 class="card-title font-weight-bold">Your title goes here</h5>
-                                                                <p class="card-text">A configurable component for displaying tabular data.</p>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <!-- Slide Item Start -->
-
-                                                    <!-- Slide Item Start -->
-                                                    <div class="slide-item">
-                                                        <div class="card">
-                                                            <img src="../static/img/cards/4.jpg" class="card-img-top" alt="Image">
-                                                            <div class="card-body">
-                                                                <h5 class="card-title font-weight-bold">Your title goes here</h5>
-                                                                <p class="card-text">A configurable component for displaying tabular data.</p>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <!-- Slide Item Start -->
-
-                                                    <!-- Slide Item Start -->
-                                                    <div class="slide-item">
-                                                        <div class="card">
-                                                            <img src="../static/img/cards/5.jpg" class="card-img-top" alt="Image">
-                                                            <div class="card-body">
-                                                                <h5 class="card-title font-weight-bold">Your title goes here</h5>
-                                                                <p class="card-text">A configurable component for displaying tabular data.</p>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <!-- Slide Item Start -->
-
-                                                    <!-- Slide Item Start -->
-                                                    <div class="slide-item">
-                                                        <div class="card">
-                                                            <img src="../static/img/cards/6.jpg" class="card-img-top" alt="Image">
-                                                            <div class="card-body">
-                                                                <h5 class="card-title font-weight-bold">Your title goes here</h5>
-                                                                <p class="card-text">A configurable component for displaying tabular data.</p>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <!-- Slide Item Start -->
-
-                                                    <!-- Slide Item Start -->
-                                                    <div class="slide-item">
-                                                        <div class="card">
-                                                            <img src="../static/img/cards/7.jpg" class="card-img-top" alt="Image">
-                                                            <div class="card-body">
-                                                                <h5 class="card-title font-weight-bold">Your title goes here</h5>
-                                                                <p class="card-text">A configurable component for displaying tabular data.</p>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <!-- Slide Item Start -->
-
-                                                    <!-- Slide Item Start -->
-                                                    <div class="slide-item">
-                                                        <div class="card">
-                                                            <img src="../static/img/cards/8.jpg" class="card-img-top" alt="Image">
-                                                            <div class="card-body">
-                                                                <h5 class="card-title font-weight-bold">Your title goes here</h5>
-                                                                <p class="card-text">A configurable component for displaying tabular data.</p>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <!-- Slide Item Start -->
+                                                    {% endfor %}
                                                 </div>
 
-
-
-
-
+                                                {% endif %}
 
                                             </div>
                                         </div>
-
-
 
                                         <div class="poll-container">
                                             <h3>Результати голосування:</h3>
+                                            {% for choice in poll.get_result_dict %}
+
                                             <div class="poll-option">
-                                                <span class="option-label">первий</span>
+                                                <span class="option-label">{{choice.text}}-{{choice.percentage|floatformat}}% {{ choice.get_vote_count }}</span>
                                                 <div class="progress-bar">
-                                                    <div class="progress-bar-inner" style="width: 40%;"></div>
+                                                    <div class="progress-bar-inner" style="width: {{ choice.percentage }}"></div>
                                                 </div>
                                             </div>
 
-                                            <div class="poll-option">
-                                                <span class="option-label">второй</span>
-                                                <div class="progress-bar">
-                                                    <div class="progress-bar-inner" style="width: 30%;"></div>
-                                                </div>
-                                            </div>
-
-                                            <div class="poll-option">
-                                                <span class="option-label">третий</span>
-                                                <div class="progress-bar">
-                                                    <div class="progress-bar-inner" style="width: 30%;"></div>
-                                                </div>
-                                            </div>
+                                            {% endfor %}
 
                                         </div>
-
                                 </div>
                             </td>
                         </tr>
-                        <tr>
-                            <td class="font-14px"> <svg xmlns="http://www.w3.org/2000/svg" width="16" height="9" fill="currentColor" class="bi bi-chevron-down" viewBox="0 0 16 16">
-                                <path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z" />
-                            </svg>02</td>
-                            <td class=" p-4 pe-3 ps-0 text-center font-14px">Buy Accessories</td>
-                            <td class="font-14px">Angelica Ramos</td>
-                            <td class="font-14px">$90,343</td>
-                        </tr>
-                        <tr>
-                            <td class="font-14px"> <svg xmlns="http://www.w3.org/2000/svg" width="16" height="9" fill="currentColor" class="bi bi-chevron-down" viewBox="0 0 16 16">
-                                <path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z" />
-                            </svg>03</td>
-                            <td class=" p-4 pe-3 ps-0 text-center font-14px">Paper Buy</td>
-                            <td class="font-14px">Ashton Cox</td>
-                            <td class="font-14px">$25,346</td>
+                        {% endfor %}
 
-                        </tr>
-                        <tr>
-                            <td class="font-14px"> <svg xmlns="http://www.w3.org/2000/svg" width="16" height="9" fill="currentColor" class="bi bi-chevron-down" viewBox="0 0 16 16">
-                                <path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z" />
-                            </svg>04</td>
-                            <td class=" p-4 pe-3 ps-0 text-center  font-14px">Domain Register</td>
-                            <td class="font-14px">Bradley Greer</td>
-                            <td class="font-14px">$53,234</td>
-
-                        </tr>
-                        <tr>
-                            <td class="font-14px"> <svg xmlns="http://www.w3.org/2000/svg" width="16" height="9" fill="currentColor" class="bi bi-chevron-down" viewBox="0 0 16 16">
-                                <path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z" />
-                            </svg>05</td>
-                            <td class=" p-4 pe-3 ps-0 text-center font-14px">Hosting Charge</td>
-                            <td class="font-14px">Brenden Wagner</td>
-                            <td class="font-14px">$23,564</td>
-
-                        </tr>
-                        <tr>
-                            <td class="font-14px"> <svg xmlns="http://www.w3.org/2000/svg" width="16" height="9" fill="currentColor" class="bi bi-chevron-down" viewBox="0 0 16 16">
-                                <path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z" />
-                            </svg>06</td>
-                            <td class=" p-4 pe-3 ps-0 text-center font-14px">ECG Machine</td>
-                            <td class="font-14px">Brielle Williamson</td>
-                            <td class="font-14px">$12,345</td>
-
-                        </tr>
-                        <tr>
-                            <td class="font-14px"> <svg xmlns="http://www.w3.org/2000/svg" width="16" height="9" fill="currentColor" class="bi bi-chevron-down" viewBox="0 0 16 16">
-                                <path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z" />
-                            </svg>07</td>
-                            <td class="p-4 pe-3 ps-0 text-center  font-14px">Paper Binding</td>
-                            <td class="font-14px">Bruno Nash</td>
-                            <td class="font-14px">$11,235</td>
-
-                        </tr>
-                        <tr>
-                            <td class="font-14px"> <svg xmlns="http://www.w3.org/2000/svg" width="16" height="9" fill="currentColor" class="bi bi-chevron-down" viewBox="0 0 16 16">
-                                <path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z" />
-                            </svg>08</td>
-                            <td class="p-4 pe-3 ps-0 text-center  font-14px">Cleaning Service</td>
-                            <td class="font-14px">Caesar Vance</td>
-                            <td class="font-14px">$34,345</td>
-
-                        </tr>
-                        <tr>
-
-                            <td class="font-14px"> <svg xmlns="http://www.w3.org/2000/svg" width="16" height="9" fill="currentColor" class="bi bi-chevron-down" viewBox="0 0 16 16">
-                                <path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z" />
-                            </svg>09</td>
-                            <td class="p-4 pe-3 ps-0 text-center  font-14px">Salery Paid</td>
-                            <td class="font-14px">Cara Stevens</td>
-                            <td class="font-14px">$24,979</td>
-
-                        </tr>
 
                         </tbody>
                     </table>
@@ -441,7 +252,7 @@
 
             $('.slider3').owlCarousel({
                 items           : 1,
-                loop            : false,
+                loop            : true,
                 nav             : false,
                 dots            : true,
                 margin          : 15,
