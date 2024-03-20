@@ -9,9 +9,9 @@
 
     <div class="main-wrapper counters">
         <div class="container-fluid">
-            <form action="" method="post">
+
             <div class="card card p-20px mb-25px">
-                <div class="card-title text-uppercase font-weight-bold font-25px mb-30px">Покази лічильників <a>(Кравець Анастасія Володимирівна (5Б) кв. 5-Б)</a></div>
+                <div class="card-title text-uppercase font-weight-bold font-25px mb-30px">Покази лічильників для <a>{{lich_selected_name}}</a></div>
 
 
                 <div id="tabs-v2" >
@@ -20,45 +20,12 @@
                         <li>
 
                             <select class="select2">
-                                <option value="2023-12">2023 Грудень</option>
-                                <option value="2023-11">2023 Листопад</option>
-                                <option value="2023-10">2023 Жовтень</option>
-                                <option value="2023-9">2023 Вересень</option>
-                                <option value="2023-8">2023 Серпень</option>
-                                <option value="2023-7">2023 Липень</option>
-                                <option value="2023-6">2023 Червень</option>
-                                <option value="2023-5">2023 Травень</option>
-                                <option value="2023-4">2023 Квітень</option>
-                                <option value="2023-3">2023 Березень</option>
-                                <option value="2023-2">2023 Лютий</option>
-                                <option value="2023-1">2023 Січень</option>
 
-                                <option value="2022-12">2022 Грудень</option>
-                                <option value="2022-11">2022 Листопад</option>
-                                <option value="2022-10">2022 Жовтень</option>
-                                <option value="2022-9">2022 Вересень</option>
-                                <option value="2022-8">2022 Серпень</option>
-                                <option value="2022-7">2022 Липень</option>
-                                <option value="2022-6">2022 Червень</option>
-                                <option value="2022-5">2022 Травень</option>
-                                <option value="2022-4">2022 Квітень</option>
-                                <option value="2022-3">2022 Березень</option>
-                                <option value="2022-2">2022 Лютий</option>
-                                <option value="2022-1">2022 Січень</option>
-
-                                <option value="2021-12">2021 Грудень</option>
-                                <option value="2021-11">2021 Листопад</option>
-                                <option value="2021-10">2021 Жовтень</option>
-                                <option value="2021-9">2021 Вересень</option>
-                                <option value="2021-8">2021 Серпень</option>
-                                <option value="2021-7">2021 Липень</option>
-                                <option value="2021-6">2021 Червень</option>
-                                <option value="2021-5">2021 Травень</option>
-                                <option value="2021-4">2021 Квітень</option>
-                                <option value="2021-3">2021 Березень</option>
-                                <option value="2021-2">2021 Лютий</option>
-                                <option value="2021-1">2021 Січень</option>
+                            {% for key, value in priboru.items %}
+                                <option value="{{key}}">{{key}}</option>
+                            {% endfor %}
                             </select>
+
 
                         </li>
 
@@ -75,77 +42,54 @@
                             <th class="text-uppercase font-14px text-center">Попередні показникі</th>
                             <th class="text-uppercase font-14px text-center">Поточні значення</th>
                             <th class="text-uppercase font-14px text-center">Різниця</th>
-                            <th class="text-uppercase font-14px text-center">Стан</th>
                         </tr>
                         </thead>
-                        <tbody id="2023-12" class="dynamic-table">
-                        <tr >
-                            <td class="font-14px">Счетчик электрический (el.1)	</td>
-                            <td class="font-14px">7513097000284</td>
-                            <td class="font-14px">
 
-                                <input type="date" id="date" placeholder="Дата" class="form-control ">
-                            </td>
-                            <td class="font-14px">
+                        {% csrf_token %}
+                        {% for key, value in priboru.items %}
+                        <tbody id="{{key}}" class="dynamic-table" style="display: none;">
+                            {% for pribor in value %}
+                            <tr>
+                                <td class="font-14px pribor_name">{{pribor.Name}}	</td>
+                                <td class="font-14px pribor_number">{{pribor.Number}}</td>
+                                <td class="font-14px pribor_code" style="display: none">{{pribor.ПриборУчетаКод}}</td>
+                                <td class="font-14px">
 
-                                <input type="number" id="number" placeholder="Попередні показникі" class="form-control first-number">
-                            </td>
-                            <td class="font-14px">
+                                    <input type="date" name="Month_name" value="{{pribor.Month}}" id="date" placeholder="Дата" class="form-control ">
+                                </td>
+                                <td class="font-14px">
 
-                                <input type="number" id="number2" placeholder="Поточні значення" class="form-control second-number">
-                            </td>
-                            <td class="font-14px " ><input type="number" id="difference" class="form-control difference" readonly></td>
-                            <td class="font-14px">нема показаннь</td>
-                        </tr>
-                        <tr >
-                            <td class="font-14px">Счетчик электрический (el.1)	</td>
-                            <td class="font-14px">7513097000284</td>
-                            <td class="font-14px">
+                                    <input type="number" name="Pokaz_prev" value="{{pribor.Pokaz_prev}}" id="number" placeholder="Попередні показникі" class="form-control first-number" readonly>
+                                </td>
+                                <td class="font-14px">
 
-                                <input type="date" id="date" placeholder="Дата" class="form-control ">
-                            </td>
-                            <td class="font-14px">
+                                    <input type="number" name="Pokaz" value="{{pribor.Pokaz}}" id="number2" placeholder="Поточні значення" class="form-control second-number">
+                                </td>
+                                <td class="font-14px " ><input  name="difference" type="number" id="difference" class="form-control difference" readonly></td>
 
-                                <input type="number" id="number" placeholder="Попередні показникі" class="form-control first-number">
-                            </td>
-                            <td class="font-14px">
 
-                                <input type="number" id="number2" placeholder="Поточні значення" class="form-control second-number">
-                            </td>
-                            <td class="font-14px " ><input type="number" id="difference" class="form-control difference" readonly></td>
-                            <td class="font-14px">нема показаннь</td>
-                        </tr>
-                        </tbody>
-                        <tbody id="2023-11" class="dynamic-table" style="display: none;">
-                        <tr  >
-                            <td class="font-14px">Счетчик электрический (el.1)	</td>
-                            <td class="font-14px">7513097000284</td>
-                            <td class="font-14px">
-                                31.10.2023
-                            </td>
-                            <td class="font-14px">
-                                332323
-                            </td>
-                            <td class="font-14px">
-                                23232
-                            </td>
-                            <td class="font-14px">2008</td>
-                            <td class="font-14px">Зараховано </td>
-                        </tr>
+
+                            </tr>
+                            {% endfor %}
 
                         </tbody>
+
+                        {% endfor %}
+
                     </table>
                 </div>
                 </div>
                 <div class="button-container">
-                    <button type="button" class="btn btn-lg btn-primary align-content-center">Записати</button>
+                    <button id="submit-button" type="submit" class="btn btn-lg btn-primary align-content-center">Записати</button>
 
                     <div style="flex-grow: 1;"></div>
 
                 </div>
+                <div id="messages" class="pt-5"></div>
+
 
             </div>
-            </form>
+
         </div>
     </div>
 </main>
@@ -154,28 +98,46 @@
 <script src="../static/js/plugins/select2.min.js"></script>
 <script>
 
+function calculateDifferences() {
+    var tableRows = document.querySelectorAll('#myTable tbody tr');
+
+    tableRows.forEach(function(row) {
+        var firstInput = row.querySelector('.first-number');
+        var secondInput = row.querySelector('.second-number');
+        var differenceInput = row.querySelector('.difference');
+
+        // Проверяем, что все три элемента присутствуют
+        if (firstInput && secondInput && differenceInput) {
+            // Функция для вычисления разницы
+            var calculateDifference = function() {
+                var firstValue = parseFloat(firstInput.value) || 0;
+                var secondValue = parseFloat(secondInput.value) || 0;
+
+                // Проверяем, что значение secondValue не является нулевым, иначе просто присваиваем разнице значение первого значения
+                if (secondValue !== 0) {
+                    differenceInput.value = (secondValue - firstValue).toFixed(2);
+                } else {
+                    differenceInput.value = firstValue.toFixed(2);
+                }
+            };
+
+            // Вызываем функцию для вычисления разницы сразу после установки начальных значений
+            calculateDifference();
+
+            // Добавляем обработчик события input для пересчета разницы при изменении значений
+            [firstInput, secondInput].forEach(function(input) {
+                input.addEventListener('input', calculateDifference);
+            });
+        }
+    });
+    }
+
+
+
 
 
     document.addEventListener('DOMContentLoaded', function() {
-        var tableRows = document.querySelectorAll('#myTable tbody tr');
-
-        tableRows.forEach(function(row) {
-            var firstInput = row.querySelector('.first-number');
-            var secondInput = row.querySelector('.second-number');
-            var differenceInput = row.querySelector('.difference');
-
-            // Проверяем, что все три элемента присутствуют
-            if (firstInput && secondInput && differenceInput) {
-                [firstInput, secondInput].forEach(function(input) {
-                    input.addEventListener('input', function() {
-                        var firstValue = parseFloat(firstInput.value) || 0;
-                        var secondValue = parseFloat(secondInput.value) || 0;
-
-                        differenceInput.value = (secondValue - firstValue).toFixed(2);
-                    });
-                });
-            }
-        });
+        calculateDifferences();
     });
 </script>
 <script>
@@ -192,10 +154,82 @@
 
             // Скрываем все таблицы
             $('.dynamic-table').hide();
+            var selector = "#" + selectedValue.replace(/ /g, "\\ ");
 
             // Отображаем выбранную таблицу
-            $('#' + selectedValue).show();
+            $(selector).show();
         });
+
+        var selectedValue = $('.select2').val();
+                // Скрываем все таблицы
+        $('.dynamic-table').hide();
+
+        var selector = "#" + selectedValue.replace(/ /g, "\\ ");
+
+        // Отображаем выбранную таблицу
+        $(selector).show();
+
+
+
+        // Обработчик нажатия на кнопку "Записать"
+        $('#submit-button').on('click', function() {
+            var postData = [];
+            // Получаем данные из видимой таблицы
+            var visibleTable = $('.dynamic-table:visible');
+            visibleTable.find('tr').each(function(index, row) {
+                var rowData = {};
+                $(row).find('td').each(function(i, td) {
+                    var className = $(td).hasClass('pribor_name');
+                    var classNameNumber = $(td).hasClass('pribor_number');
+                    var classNameNumberCode = $(td).hasClass('pribor_code');
+                    var input = $(td).find('input');
+
+                    if (className) {
+                        var text = $(td).text().trim();
+                        rowData["Name"] = text;
+                    } else if (classNameNumber) {
+                        var text = $(td).text().trim();
+                        rowData["Number"] = text;
+                    } else if (classNameNumberCode) {
+                        var text = $(td).text().trim();
+                        rowData["NumberCode"] = text;
+                    } else if (input.length > 0)  {
+                        var name = input.attr('name');
+                        var value = input.val();
+                        rowData[name] = value;
+                    }
+                });
+                postData.push(rowData);
+            });
+
+
+
+
+            // Выполняем POST-запрос
+            $.ajax({
+                type: 'POST',
+                url: '/counters/',
+                data: {data: JSON.stringify(postData)},
+                headers: { 'X-CSRFToken': $('input[name="csrfmiddlewaretoken"]').val() },
+                success: function(response) {
+                      // Очищаем контейнер сообщений перед добавлением новых сообщений
+                      $('#messages').empty();
+
+                      // Перебираем ответ от сервера и добавляем сообщения в контейнер
+                      for (var i = 0; i < response.data.length; i++) {
+                        var messageClass = response.data[i].success ? 'alert-success' : 'alert-danger';
+                        var text =  response.data[i].success ? 'Показання успішно оновлені для ' : 'Показання не оновлені для '
+
+                        $('#messages').append('<div class="alert ' + messageClass + '" role="alert">' + text + response.data[i].Name + '</div>');
+                      }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Произошла ошибка при выполнении запроса', error);
+                }
+            });
+        });
+
     });
 </script>
+
 {% endblock %}

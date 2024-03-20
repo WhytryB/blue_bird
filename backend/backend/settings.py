@@ -138,3 +138,6 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'main/media/')
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+SESSION_COOKIE_AGE = 1209600  # Время жизни куки в секундах (2 недели

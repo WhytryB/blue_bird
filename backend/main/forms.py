@@ -4,7 +4,7 @@ from django import forms
 from django.forms import ValidationError
 from django.conf import settings
 from django.contrib.auth.models import User
-from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.forms import UserCreationForm,  PasswordChangeForm
 from django.utils import timezone
 from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
@@ -88,3 +88,13 @@ class ChangeProfileForm(forms.Form):
             widget=forms.FileInput(attrs={'class': 'form-control'}),
             required=False
         )
+    old_password = forms.CharField(
+        label='Старий пароль',
+        widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': "Поточний Пароль", 'autocomplete': 'off'}),
+        required=False,
+    )
+    new_password = forms.CharField(
+        label='Новий пароль',
+        widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': "Пароль", 'autocomplete': 'off'}),
+        required=False,
+    )

@@ -10,10 +10,10 @@ class CustomUser(AbstractUser):
     last_name = models.CharField(max_length=30, blank=True, null=True)
     middle_name = models.CharField(max_length=30, blank=True, null=True)
     mobile = models.CharField(max_length=15, blank=True, null=True)
-    email = models.EmailField(unique=True)
+    email = models.EmailField(blank=True, unique=False)
     address = models.TextField(blank=True, null=True)
     profile_picture = models.ImageField(upload_to='profile_pics/', null=True, blank=True)
-    # Добавьте другие поля, если необходимо
+    ref_key = models.CharField(max_length=255, blank=True, null=True)
 
     def __str__(self):
         full_name = f"{self.first_name} {self.last_name}"
@@ -21,19 +21,21 @@ class CustomUser(AbstractUser):
 
 
 class Poll(models.Model):
-    owner = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     text = models.TextField()
     pub_date = models.DateTimeField(default=timezone.now)
     active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     photos = models.ManyToManyField('PhotoModel', blank=True,  related_name='poll_photos')
 
+    
     def user_can_vote(self, user):
         """
         Return False if user already voted
         """
         user_votes = user.vote_set.all()
         qs = user_votes.filter(poll=self)
+
+
         if qs.exists():
             return False
         return True
@@ -94,3 +96,24 @@ class Vote(models.Model):
 
     def __str__(self):
         return f'{self.poll.text[:15]} - {self.choice.choice_text[:15]} - {self.user.username}'
+
+
+class SupportTicket(models.Model):
+    CATEGORY_CHOICES = [
+        (1, 'Проблема з оплатою'),
+        (2, 'Проблема з підтримкою власників'),
+        (3, 'Технічні проблеми з обладнанням'),
+        (4, 'Проблема з інтернетом або зв\'язком'),
+        (5, 'Проблема з комунікацією'),
+        (7, 'Нещасний випадок або надзвичайна ситуація'),
+        (8, 'Проблема з безпекою'),
+        (9, 'Інша проблема'),
+    ]
+
+    category = models.IntegerField(choices=CATEGORY_CHOICES)
+    description = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    from_user = models.TextField(null=True)
+
+    def __str__(self):
+        return f'Ticket {self.pk}'

@@ -12,14 +12,21 @@
 
             <div class="card card p-20px mb-25px">
                 <div class="card-title text-uppercase font-weight-bold font-25px mb-30px">Створити тікет</div>
-                <form action="#">
+                <form  id="support-form" action="{% url 'support' %}" method="post">
+                    {% csrf_token %}
                     <div class="row">
                         <div class="col-md-8">
                             <div class="mb-3">
                                 <label >Категорія проблеми</label>
-                                <select class="select2">
-                                    <option value="1">проблема 1</option>
-                                    <option value="2">проблема 2</option>
+                                <select name="category"  class="select2">
+                                    <option value="1">Проблема з оплатою</option>
+                                    <option value="2">Проблема з підтримкою власників</option>
+                                    <option value="3">Технічні проблеми з обладнанням</option>
+                                    <option value="4">Проблема з інтернетом або зв'язком</option>
+                                    <option value="5">Проблема з комунікацією</option>
+                                    <option value="7">Нещасний випадок або надзвичайна ситуація</option>
+                                    <option value="8">Проблема з безпекою</option>
+                                    <option value="9">Інша проблема</option>
 
                                 </select>
                             </div>
@@ -34,9 +41,16 @@
                         </div>
                         <div class="col-md-12">
                             <div class="mb-3">
-                                <button type="submit" class="btn btn-lg btn-dark">Створити</button>
+                                <button type="submit" class="btn btn-lg btn-primary">Створити</button>
                             </div>
                         </div>
+                        {% if messages %}
+                            <ul class="messages">
+                                {% for message in messages %}
+                                    <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
                     </div>
                 </form>
             </div>

@@ -12,11 +12,12 @@
             <div class="card card p-20px mb-25px">
                 <div class="card-title text-uppercase font-weight-bold font-25px mb-30px">Автономери для запису в автоматичний шлагбаум</div>
                 <div class="table-responsive">
+                    {% if cars %}
                     <table id="table1" class="table table-striped table-bordered" style="width:100%">
                         <thead class="thead-dark">
                         <tr>
                             <th class="text-uppercase font-14px text-center">
-                                Кто вніс, коли	</th>
+                                Дата зміни	</th>
                             <th class="text-uppercase font-14px text-center">Номер</th>
                             <th class="text-uppercase font-14px text-center">Транспорт</th>
                             <th class="text-uppercase font-14px text-center">ПІБ, тел.</th>
@@ -27,26 +28,32 @@
                         </tr>
                         </thead>
                         <tbody>
+                        {% for car in cars %}
                         <tr>
-                            <td class="font-14px">12006
-                                15:44 20/10/2023</td>
-                            <td class="font-14px">BH0000BC</td>
-                            <td class="font-14px">LandRover</td>
-                            <td class="font-14px">Кравець Анастасія Володимирівна (5А) кв. 5-А; мм. 44; (усього 2шт.)
-                                Кравец Анастасия, +380677877333</td>
-                            <td class="font-14px">parking</td>
-                            <td class="font-14px">18/09/2023 - 31/12/9999</td>
-                            <td class="font-14px">Очікую оплату
-                                622120</td>
+                            <td class="font-14px">{{car.Период}}</td>
+                            <td class="font-14px number_car">{{car.НомерМашиноМеста}}</td>
+                            <td class="font-14px"></td>
+                            <td class="font-14px">{{car.owner}}<br>
+                                {{car.owner_phone}}</td>
+                            <td class="font-14px view_car">{{car.ВидМашиноМеста}}</td>
+                            <td class="font-14px ">{{car.Период}}</td>
+                            <td class="font-14px">Активно: {{car.Актив}}</td>
                             <td class="font-14px text-center">
-                                <a href="#" class="btn btn-sm btn-primary">Активувати</a>
-                                <a href="#" class="btn btn-sm btn-dark">Редагувати</a>
-                                <a href="#" class="btn btn-sm btn-danger">Видалити</a>
+<!--                                <a href="#" class="btn btn-sm btn-primary">Активувати</a>-->
+                                <a class="edit-btn btn btn-sm btn-dark">Редагувати</a>
+                                <a class="delete-btn btn btn-sm btn-danger">Видалити</a>
                             </td>
                         </tr>
+                        {% endfor %}
 
                         </tbody>
                     </table>
+                    <div id="messages-table" class="pt-5"></div>
+                    {% else %}
+                        <div style=" text-align: center; color: #777; " class="no-data-message pt-5 pb-5">
+                            <h1>Даних немає</h1>
+                        </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -60,9 +67,13 @@
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label >Особовий рахунох</label>
+
                                 <select class="select2">
-                                    <option value="1">Кравець Анастасія Володимирівна (5А) кв. 5-А; мм. 44, мм. 10</option>
-                                    <option value="2">Value Two</option>
+                                    {% for item in lich %}
+                                        <option value="{{ item.codes }}">
+                                            {{ item.names }}
+                                        </option>
+                                    {% endfor %}
 
                                 </select>
                             </div>
@@ -77,43 +88,46 @@
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label for="date-1">Дата початку дозволу на В'їзд <sup class="text-danger font-15px">*</sup></label>
-                                <input type="date" id="date-1" placeholder="Дата початку дозволу на В'їзд" class="form-control">
+                                <input type="date" id="date-1" required name='date1' placeholder="Дата початку дозволу на В'їзд" class="form-control">
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label for="date-2">Дата закінчення дозволу на В'їзд <sup class="text-danger font-15px">*</sup></label>
-                                <input type="date" id="date-2" placeholder="Дата закінчення дозволу на В'їзд" class="form-control">
+                                <input type="date" id="date-2" required name='data2' placeholder="Дата закінчення дозволу на В'їзд" class="form-control">
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label for="marc">Марка, колір, опис автомобіля<sup class="text-danger font-15px">*</sup></label>
-                                <input type="text" id="marc" name="marc" class="form-control" placeholder="коротко">
+                                <input type="text" id="marc" required name="marc" class="form-control" placeholder="коротко">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="phone">Номер телефона <sup class="text-danger font-15px">*</sup></label>
+                                <input type="text" id="phone" required name="phone" class="form-control" placeholder="Номер телефона">
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label >Статус власності<sup class="text-danger font-15px">*</sup></label>
                                 <div>
-                                    <input type="radio" name="checkboxGroup" id="option1">  Власник нерухомості
+                                    <input type="radio" required name="checkboxGroup" id="option1" value="owner">  Власник нерухомості
                                 </div>
 
                                 <div>
-                                    <input type="radio" name="checkboxGroup" id="option2"> Арендатор нерухомості
+                                    <input type="radio" required name="checkboxGroup" id="option2" value="tenant"> Арендатор нерухомості
                                 </div>
+
                             </div>
                         </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="dob">ФІП власника/арендатора авто <sup class="text-danger font-15px">*</sup></label>
-                                <input type="text" id="dob" name="dob" class="form-control" placeholder="ФІП власника/арендатора авто">
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="phone">Номер телефона <sup class="text-danger font-15px">*</sup></label>
-                                <input type="text" id="phone" name="phone" class="form-control" placeholder="Номер телефона">
+                        <div class="col-md-6" >
+                            <div class="mb-3" >
+                                <div id="additionalFields" style="display:none;">
+                                    <label for="dob">ФІП власника/арендатора авто <sup class="text-danger font-15px">*</sup></label>
+                                    <input type="text" id="dob" name="dob" class="form-control" placeholder="ФІП власника/арендатора авто">
+                                </div>
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -121,30 +135,30 @@
                                 <label >Місце стоянки <sup class="text-danger font-15px">*</sup></label>
 
                                 <div>
-                                    <input type="radio" name="checkboxGroup1" id="option11">  Двір
+                                    <input type="radio" name="checkboxGroup1" required id="option11" value="dvor">  Двір
                                 </div>
 
                                 <div>
-                                    <input type="radio" name="checkboxGroup1" id="option12"> Паркінг
+                                    <input type="radio" name="checkboxGroup1" required id="option12" value="park"> Паркінг
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-6" id="additionalFields1" style="display:none;">
                             <div class="mb-3">
                                 <label for="pitnum">Номер паркомісця </label>
-                                <input type="text" id="pitnum" name="pitnum" class="form-control" placeholder="Номер паркомісця якщо Паркінг ">
+                                <input type="text" id="pitnum" name="pitnum"  class="form-control" placeholder="Номер паркомісця якщо Паркінг ">
                             </div>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-6" id="additionalFields2" style="display:none;">
                             <div class="mb-3">
                                 <label >Паркінг <sup class="text-danger font-15px">*</sup></label>
 
                                 <div>
-                                    <input type="radio" name="checkboxGroup2" id="option111">  Власник паркінгу
+                                    <input type="radio" required name="checkboxGroup2" id="option111">  Власник паркінгу
                                 </div>
 
                                 <div>
-                                    <input type="radio" name="checkboxGroup2" id="option122"> Орендатор паркінгу
+                                    <input type="radio" required name="checkboxGroup2" id="option122"> Орендатор паркінгу
                                 </div>
                             </div>
                         </div>
@@ -156,10 +170,12 @@
                         </div>
                         <div class="col-md-12">
                             <div class="mb-3">
-                                <button type="submit" class="btn btn-lg btn-dark">Додати</button>
+                                <button id='dodatu'  class="btn btn-lg btn-primary">Додати</button>
                             </div>
                         </div>
+
                     </div>
+                    <div id="messages" class="pt-5"></div>
                 </form>
             </div>
         </div>
@@ -176,6 +192,240 @@
             dropdownPosition: 'below',
 
         });
+
+        $('input[name="checkboxGroup"]').change(function () {
+            // Если выбрана опция "Арендатор", показать дополнительные поля, иначе скрыть
+            if ($(this).val() === "tenant") {
+                $('#additionalFields').show();
+            } else {
+                $('#additionalFields').hide();
+            }
+        });
+
+        $('input[name="checkboxGroup1"]').change(function () {
+            // Если выбрана опция "Арендатор", показать дополнительные поля, иначе скрыть
+            if ($(this).val() === "park") {
+                $('#additionalFields1').show();
+                $('#additionalFields2').show();
+            } else {
+                $('#additionalFields1').hide();
+                $('#additionalFields2').hide();
+            }
+        });
+
+        function seveCarData(visibleTable){
+            var postData = [];
+            visibleTable.find('tr').each(function(index, row) {
+                var rowData = {};
+                $(row).find('td').each(function(i, td) {
+
+                    var number_name = $(td).hasClass('number_car');
+                    var view_car = $(td).hasClass('view_car');
+
+
+                    if (number_name) {
+                        var text = $(td).text().trim();
+                        rowData["НомерМашиноМеста"] = text;
+                    } else if (view_car) {
+                        var text = $(td).text().trim();
+                        rowData["Вид"] = text;
+                    }
+                });
+                if (Object.keys(rowData).length !== 0){
+                     postData.push(rowData);
+                }
+
+            });
+
+            $('#messages-table').empty();
+
+
+            // Выполняем POST-запрос
+            $.ajax({
+                type: 'POST',
+                url: '/cars/',
+                data: {data: JSON.stringify(postData)},
+                headers: { 'X-CSRFToken': $('input[name="csrfmiddlewaretoken"]').val() },
+                success: function(response) {
+                      // Очищаем контейнер сообщений перед добавлением новых сообщений
+
+                      if (response && response.status === 'success') {
+                            location.reload();
+                        } else {
+                            // Обработка ошибки
+                            $('#messages-table').append('<div class="alert ' + 'alert-danger' + '" role="alert">' + 'Показання не оновлені' + '</div>');
+                        }
+                },
+                error: function(xhr, status, error) {
+                    $('#messages-table').append('<div class="alert ' + 'alert-danger' + '" role="alert">' + 'Показання не оновлені' + '</div>');
+                    console.error('Произошла ошибка при выполнении запроса', error);
+
+                }
+            });
+
+        }
+
+
+        $('.delete-btn').on('click', function() {
+
+            // Получаем данные из видимой таблицы
+            var visibleTable = $('#table1');
+            $(this).closest('tr').remove();
+            seveCarData(visibleTable)
+
+        });
+
+        $('#dodatu').on('click', function() {
+            event.preventDefault();
+            $('#messages').empty();
+
+            $('input[type="text"], input[type="date"], input[type="radio"], textarea').removeClass('is-invalid');
+
+            // Проверяем, все ли обязательные поля заполнены
+            var allFieldsFilled = true;
+            $('input[type="text"], input[type="date"], input[type="radio"], textarea').each(function() {
+                if ($(this).val().trim() === '' && $(this).prop('required')) {
+                    allFieldsFilled = false;
+                    // Добавляем класс "is-invalid" к полю, если оно пустое и обязательное
+                    $(this).addClass('is-invalid');
+                    return false; // Выходим из цикла, если найдено незаполненное обязательное поле
+                }
+            });
+
+        // Если не все обязательные поля заполнены, выводим сообщение об ошибке
+        if (!allFieldsFilled) {
+            $('#messages').append('<div class="alert alert-danger" role="alert">Будь ласка, заповніть всі обов\'язкові поля.</div>');
+            return;
+        }
+
+        // Если все поля заполнены, собираем данные в объект
+        var formData = {};
+        $('input[type="text"], input[type="date"], input[type="radio"], textarea').each(function() {
+            if ($(this).attr('type') === 'radio') {
+                var radioName = $(this).attr('name');
+                formData[radioName] = $('input[name="' + radioName + '"]:checked').val();
+            } else {
+                formData[$(this).attr('name')] = $(this).val();
+            }
+        });
+
+        formData['data_lich'] = $('.select2').val();
+
+        var postData = [];
+            // Получаем данные из видимой таблицы
+            var visibleTable = $('#table1');
+            visibleTable.find('tr').each(function(index, row) {
+                var rowData = {};
+                $(row).find('td').each(function(i, td) {
+
+                    var number_name = $(td).hasClass('number_car');
+                    var view_car = $(td).hasClass('view_car');
+
+
+                    if (number_name) {
+                        var text = $(td).text().trim();
+                        rowData["НомерМашиноМеста"] = text;
+                    } else if (view_car) {
+                        var text = $(td).text().trim();
+                        rowData["Вид"] = text;
+                    }
+                });
+                if (Object.keys(rowData).length !== 0){
+                     postData.push(rowData);
+                }
+
+            });
+
+        postData.push(formData);
+        $('#messages').empty();
+
+        $.ajax({
+                type: 'POST',
+                url: '/cars/',
+                data: {data_new: JSON.stringify(postData)},
+                headers: { 'X-CSRFToken': $('input[name="csrfmiddlewaretoken"]').val() },
+                success: function(response) {
+                      // Очищаем контейнер сообщений перед добавлением новых сообщений
+
+
+
+                        if (response && response.status === 'success') {
+                            location.reload();
+                        } else {
+                            // Обработка ошибки
+                            $('#messages').append('<div class="alert ' + 'alert-danger' + '" role="alert">' + 'Показання не додані' + '</div>');
+                        }
+
+
+                },
+                error: function(xhr, status, error) {
+                    $('#messages').append('<div class="alert ' + 'alert-danger' + '" role="alert">' + 'Показання не додані' + '</div>');
+                    console.error('Произошла ошибка при выполнении запроса', error);
+                }
+            });
+
+        });
+
+        function editRow(tr, editButton) {
+            editButton.text('Зберегти').removeClass('btn-dark').addClass('btn-primary');
+            tr.find('td:not(:first-child):not(:last-child):not(:nth-last-child(2)):not(:nth-last-child(3))').each(function() {
+                var currentText = $(this).text();
+                if ($(this).hasClass('view_car')) {
+                    var selectOptions = ['Паркінг', 'Двір'];
+                    var select = $('<select>').addClass('form-select');
+                    for (var i = 0; i < selectOptions.length; i++) {
+                        var option = $('<option>').val(selectOptions[i]).text(selectOptions[i]);
+                        select.append(option);
+                    }
+                    select.val(currentText);
+                    $(this).html(select);
+                } else {
+                    var input = $('<input>').attr('type', 'text').addClass('form-control').val(currentText);
+                    $(this).html(input);
+                }
+            });
+            tr.find('.delete-btn').hide();
+        }
+
+        function saveRow(tr, editButton) {
+            tr.find('td:not(:first-child):not(:last-child):not(:nth-last-child(2)):not(:nth-last-child(3))').each(function() {
+                if ($(this).hasClass('view_car')) {
+                    newValue = $(this).find('select').val();
+                 } else {
+                    var newValue = $(this).find('input').val();
+                }
+                $(this).text(newValue);
+            });
+
+            editButton.text('Редагувати').removeClass('btn-primary').addClass('btn-dark');
+            tr.find('.delete-btn').show();
+        }
+
+        $('.edit-btn').click(function() {
+            var tr = $(this).closest('tr');
+            var editButton = $(this);
+
+            if (editButton.hasClass('btn-dark')) {
+                editRow(tr, editButton);
+            } else {
+                saveRow(tr, editButton);
+            }
+
+            editButton.unbind().click(function() {
+                if ($(this).hasClass('btn-dark')) {
+                    editRow(tr, $(this));
+                } else {
+                    saveRow(tr, $(this));
+                     var visibleTable = $('#table1');
+                     seveCarData(visibleTable);
+                }
+            });
+
+
+        });
+
     });
+
+
 </script>
 {% endblock %}

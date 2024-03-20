@@ -1,4 +1,0 @@
-django
-pyodbc
-pillow
-requests

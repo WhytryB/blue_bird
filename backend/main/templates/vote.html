@@ -18,17 +18,17 @@
 
                 <div class="card card p-20px mb-25px">
                     <div class="card-title text-uppercase font-weight-bold font-25px mb-30px">
-                        <p class="pb-15px text-center mobile-font-size">{{last_poll.text}}
+                        <p class="pb-15px text-center mobile-font-size">{{last_poll.head_text}}.<br>{{last_poll.ВопросГолосования}}
                         </p>
                     </div>
                     <div class="card-body">
-                        {% if last_poll.photos.all %}
+                        {% if last_poll.Poll_data.photos.all %}
 
 
                         <div class="owl-carousel slider2 pb-15px">
                             <!-- Slide Item Start -->
 
-                            {% for photo in last_poll.photos.all %}
+                            {% for photo in last_poll.Poll_data.photos.all %}
                             <div class="slide-item">
                                 <div class="card">
                                     <img src="{{ photo.photo.url }}" class="card-img-top" alt="Image">
@@ -52,10 +52,10 @@
 
 
                                         <!-- Опции голосования -->
-                                        {% for choice in last_poll.choice_set.all %}
+                                        {% for choice in last_poll.Poll_data.choice_set.all %}
                                         <div class="poll-option font-18px pt-5px " style="text-align: left ; padding-left: 20%; padding-right: 10%">
 
-                                            <input style=" text-align: left;" type="radio" name="choice" id="choice{{ forloop.counter }}" value="{{ choice.id }}">
+                                            <input style=" text-align: left;" type="radio" name="choice" id="choice{{ forloop.counter }}" value="{{ choice.id }}_{{last_poll.Poll_data.id}}">
                                             <label style=" text-align: left;" for="choice{{ forloop.counter }}">{{ choice.choice_text }}</label>
 
                                             <br>
@@ -72,12 +72,12 @@
                             <div class="col-md-8">
                                 <div class="poll-container pt-30px">
                                     <h3>Поточні результати голосування:</h3>
-                                    {% for choice in last_poll.get_result_dict %}
+                                    {% for choice in last_poll.РезультатГолосования %}
 
                                     <div class="poll-option">
-                                        <span class="option-label">{{choice.text}}-{{choice.percentage|floatformat}}% {{ choice.get_vote_count }}</span>
+                                        <span class="option-label">{{choice.имя}}-{{choice.проценты|floatformat}}% {{ choice.варианты }}</span>
                                         <div class="progress-bar">
-                                            <div class="progress-bar-inner" style="width: {{ choice.percentage }}"></div>
+                                            <div class="progress-bar-inner" style="width: {{ choice.проценты }}"></div>
                                         </div>
                                     </div>
                                     {% endfor %}
@@ -143,9 +143,9 @@
                                 {{ forloop.counter }}
 
                             </td>
-                            <td class=" p-4 pe-3 ps-0 text-center font-14px">{{ poll.created_at }}</td>
-                            <td class="font-14px">{{ poll.pub_date }}</td>
-                            <td class="text-center "><span>{{ poll.text }}</span></td>
+                            <td class=" p-4 pe-3 ps-0 text-center font-14px">{{ poll.Poll_data.created_at }}</td>
+                            <td class="font-14px">{{ poll.Poll_data.pub_date }}</td>
+                            <td class="text-center "><span>{{poll.head_text}}.<br>{{poll.ВопросГолосования}} </span></td>
 
                         </tr>
                         <tr id="flush-collapse{{ forloop.counter }}" class="accordion-collapse collapse" data-bs-parent="#accordionFlushExample" >
@@ -154,20 +154,20 @@
                                 <div class="accordion-body">
 
                                     <div class="card-title text-uppercase font-weight-bold font-25px mb-30px">
-                                        <p class="font-25px pb-15px mobile-font-size">{{ poll.text }}</p></div>
-                                        <h3 class="mb-2 text-center">Всього : {{ poll.get_vote_count }} голосів</h3>
+                                        <p class="font-25px pb-15px mobile-font-size text-center">{{poll.head_text}}.<br>{{poll.ВопросГолосования}}</p></div>
+                                        <h3 class="mb-2 text-center">Всього : {{ poll.Poll_data.get_vote_count }} голосів</h3>
                                         <div class="main-wrapper">
                                             <div class="container-fluid">
 
 
-                                                {% if poll.photos.all %}
+                                                {% if poll.Poll_data.photos.all %}
 
 
 
                                                 <div class="owl-carousel slider3">
                                                     <!-- Slide Item Start -->
 
-                                                    {% for photo in poll.photos.all %}
+                                                    {% for photo in poll.Poll_data.photos.all %}
                                                         <div class="slide-item">
                                                             <div class="card">
                                                                 <img src="{{ photo.photo.url }}" class="card-img-top" alt="Image">
@@ -188,16 +188,16 @@
 
                                         <div class="poll-container">
                                             <h3>Результати голосування:</h3>
-                                            {% for choice in poll.get_result_dict %}
+                                            {% for choice in poll.РезультатГолосования %}
 
-                                            <div class="poll-option">
-                                                <span class="option-label">{{choice.text}}-{{choice.percentage|floatformat}}% {{ choice.get_vote_count }}</span>
-                                                <div class="progress-bar">
-                                                    <div class="progress-bar-inner" style="width: {{ choice.percentage }}"></div>
+                                                <div class="poll-option">
+                                                    <span class="option-label">{{choice.имя}}-{{choice.проценты|floatformat}}% {{ choice.варианты }}</span>
+                                                    <div class="progress-bar">
+                                                        <div class="progress-bar-inner" style="width: {{ choice.проценты }}"></div>
+                                                    </div>
                                                 </div>
-                                            </div>
-
                                             {% endfor %}
+
 
                                         </div>
                                 </div>
@@ -233,7 +233,7 @@
 
             $('.slider2').owlCarousel({
                 items           : 1,
-                loop            : true,
+                loop            : false,
                 nav             : false,
                 dots            : true,
                 margin          : 15,
@@ -252,7 +252,7 @@
 
             $('.slider3').owlCarousel({
                 items           : 1,
-                loop            : true,
+                loop            : false,
                 nav             : false,
                 dots            : true,
                 margin          : 15,

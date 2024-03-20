@@ -69,18 +69,27 @@
                 <h4 class="card-title text-uppercase font-weight-bold font-14px mt-20px mb-20px ">Змінити пароль</h4>
               </div>
             </div>
+            <div class="col-md-5">
+              <div class="mb-3">
+                <label for="{{ form.old_password.id_for_label }}">Старий пароль <sup class="text-danger font-15px">*</sup></label>
+                {{ form.old_password }}
+
+              </div>
+
+            </div>
+
             <div class="col-md-6">
               <div class="mb-3">
-                <label for="old_password">Старий пароль <sup class="text-danger font-15px">*</sup></label>
-                <input type="password" id="old_password" name="old_password" class="form-control" placeholder="Пароль">
+                <label for="{{ form.new_password.id_for_label }}">Новий пароль <sup class="text-danger font-15px">*</sup></label>
+                {{ form.new_password }}
               </div>
             </div>
-            <div class="col-md-6">
-              <div class="mb-3">
-                <label for="new_password">Новий пароль <sup class="text-danger font-15px">*</sup></label>
-                <input type="password" id="new_password" name="new_password" class="form-control" placeholder="Підтвердити пароль">
+            <div class="col-md-1">
+              <div class="pt-4 mt-3">
+                <i onclick="togglePasswordVisibility('id_old_password')" class="fa-solid fa-eye" style="cursor: pointer;"></i>
               </div>
             </div>
+
 
             <div class="col-md-12">
               {% if messages %}
@@ -107,6 +116,19 @@
 
 
 <script>
-
+  function togglePasswordVisibility(fieldId) {
+        var field = document.getElementById(fieldId);
+        var field1 = document.getElementById("id_new_password");
+        if (field.type === 'password') {
+          field.type = 'text';
+        } else {
+          field.type = 'password';
+        }
+        if (field1.type === 'password') {
+          field1.type = 'text';
+        } else {
+          field1.type = 'password';
+        }
+      }
 </script>
 {% endblock %}
