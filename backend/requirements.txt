@@ -3,3 +3,4 @@ pyodbc
 pillow
 requests
 python-dotenv
+django-notifications-hq

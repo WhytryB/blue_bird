@@ -37,7 +37,7 @@ import calendar
 import re
 import random
 import locale
-
+from notifications.signals import notify
 
 
 osbb = OSBB()
@@ -45,6 +45,14 @@ locale.setlocale(locale.LC_TIME, 'uk_UA.UTF-8')
 
 def parse_date(date_str):
     return datetime.strptime(date_str, "%d.%m.%Y %H:%M:%S")
+
+
+def mark_notifications_as_read(request):
+    if request.method == 'POST':
+        # Помечаем все уведомления пользователя как прочитанные
+        request.user.notifications.mark_all_as_read()
+        return JsonResponse({'status': 'success', 'ok': True})
+    return JsonResponse({'status': 'error'})
 
 class HomeView(LoginRequiredMixin, TemplateView):
     template_name = 'index.html'
@@ -327,6 +335,9 @@ class HomeView(LoginRequiredMixin, TemplateView):
                                          "month_nachislenie": i['month_nachislenie'],
                                          "second_month_name": i["second_month_name"]} for i in result_list]
                 context['raschet'] = result_list
+
+
+                notify.send(self.request.user, recipient=self.request.user, verb=f'Перехід на головну сторінку {self.request.user.username}')
 
 
 
@@ -1035,6 +1046,12 @@ class LogInView(GuestOnlyView, FormView):
         url_is_safe = is_safe_url(redirect_to, allowed_hosts=request.get_host(), require_https=request.is_secure())
 
         if url_is_safe:
+            try:
+                notify.send(self.request.user, recipient=self.request.user,
+                        verb=f'Новий вхід {self.request.user.username}')
+            except Exception as e:
+                pass
+
             return redirect(redirect_to)
 
         return redirect(settings.LOGIN_REDIRECT_URL)

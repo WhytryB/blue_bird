@@ -24,107 +24,51 @@
             <h1 class="logo" style="width: 80%">
                 <select class="form-select font-weight-bold" id="exampleSelect" style="background-color: #3c4e62; color: white;">
                     <option class="form-select font-weight-bold">СИНІЙ ПТАХ</option>
-                    <option class="form-select font-weight-bold">Інший</option>
                     <!-- Добавьте дополнительные опции по вашему выбору -->
                 </select>
             </h1>
             <span class="toggle-bar float-end"><i class="fa-solid fa-bars-staggered"></i></span>
         </div>
         <div class="head-content">
+            {% load notifications_tags %}
+
             <!--Notification Toggle Start-->
             <div class="nofications toggle-item d-md-block d-none">
+
                 <div class="dropdown">
                     <a class="icon" href="#" id="nofications" data-bs-toggle="dropdown">
                         <i class="fa-regular fa-bell"></i>
-                        <span>5</span>
+
+
+                        <span>  {% live_notify_badge %} </span>
                     </a>
                     <ul class="dropdown-menu notification-list shadow" aria-labelledby="nofications">
                         <div class="dropdown-header bg-secondary">
-                            <strong class="text-white">0 New Notification</strong>
+                            <strong class="text-white">Повідомлення</strong>
                         </div>
-                        <!--Notification Item Start-->
-                        <li>
-                            <a class="dropdown-item" href="#">
-                                <div class="notification-item">
-                                    <div class="icon">
-                                        <i class="fa-solid fa-bullhorn"></i>
-                                    </div>
-                                    <div class="content">
-                                        <strong>New Notification</strong>
-                                        <span class="float-end">2 days ago</span>
-                                        <p>Quis quam saepe blandi tiis simil...</p>
-                                    </div>
-                                </div>
-                            </a>
-                        </li>
-                        <!--Notification Item End-->
 
-                        <!--Notification Item Start-->
-                        <li>
-                            <a class="dropdown-item" href="#">
-                                <div class="notification-item">
-                                    <div class="icon">
-                                        <i class="fa-solid fa-bullhorn"></i>
-                                    </div>
-                                    <div class="content">
-                                        <strong>New Notification</strong>
-                                        <span class="float-end">5 days ago</span>
-                                        <p>Elige ndi amet non tenetur porro...</p>
-                                    </div>
-                                </div>
-                            </a>
-                        </li>
-                        <!--Notification Item End-->
 
-                        <!--Notification Item Start-->
-                        <li>
-                            <a class="dropdown-item" href="#">
-                                <div class="notification-item">
-                                    <div class="icon">
-                                        <i class="fa-solid fa-bullhorn"></i>
-                                    </div>
-                                    <div class="content">
-                                        <strong>New Notification</strong>
-                                        <span class="float-end">6 days ago</span>
-                                        <p>Assu menda ducimus nemo laudan...</p>
-                                    </div>
-                                </div>
-                            </a>
-                        </li>
-                        <!--Notification Item End-->
+                          {% for notification in  user.notifications.unread %}
+                                <li>
+                                    <a class="dropdown-item" href="#">
+                                        <div class="notification-item">
+                                            <div class="icon">
+                                                <i class="fa-solid fa-bullhorn"></i>
+                                            </div>
+                                            <div class="content">
+                                                <strong>Нове повідомлення</strong>
+<!--                                                <span class="float-end">2 days ago</span>-->
+                                                <p>{{ notification.verb }}</p>
+                                            </div>
+                                        </div>
+                                    </a>
+                                </li>
 
-                        <!--Notification Item Start-->
-                        <li>
-                            <a class="dropdown-item" href="#">
-                                <div class="notification-item">
-                                    <div class="icon">
-                                        <i class="fa-solid fa-bullhorn"></i>
-                                    </div>
-                                    <div class="content">
-                                        <strong>New Notification</strong>
-                                        <span class="float-end">12 days ago</span>
-                                        <p>Asper iores pariatur disti nctio...</p>
-                                    </div>
-                                </div>
-                            </a>
-                        </li>
-                        <!--Notification Item End-->
 
+                            {% endfor %}
                         <!--Notification Item Start-->
-                        <li>
-                            <a class="dropdown-item" href="#">
-                                <div class="notification-item">
-                                    <div class="icon">
-                                        <i class="fa-solid fa-bullhorn"></i>
-                                    </div>
-                                    <div class="content">
-                                        <strong>New Notification</strong>
-                                        <span class="float-end">20 days ago</span>
-                                        <p>Dolor sit afrg amet conse ctetur...</p>
-                                    </div>
-                                </div>
-                            </a>
-                        </li>
+
+
                         <!--Notification Item End-->
                     </ul>
                 </div>
@@ -214,6 +158,28 @@
         // Скрываем сообщение
         messageDiv.style.display = 'none';
     }
+
+    document.getElementById('nofications').addEventListener('click', function(event) {
+    // Отмена действия по умолчанию, чтобы предотвратить переход по ссылке
+    event.preventDefault();
+    var csrf_token = $('[name="csrfmiddlewaretoken"]').val();
+    // Отправка POST-запроса для сброса непрочитанных уведомлений
+    fetch('/mark-as-read/', {
+            method: 'POST',
+            headers: { "X-CSRFToken": csrf_token },
+        })
+        .then(response => {
+             if (response.ok) {
+            // Обновить содержимое элемента <span> на 0
+                document.querySelector('.live_notify_badge').textContent = '0';
+            } else {
+                console.error('Response not OK:', response.status);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+    });
 </script>
 {% block scripts %} {% endblock %}
 </body>

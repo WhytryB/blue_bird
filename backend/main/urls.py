@@ -1,8 +1,11 @@
 from django.urls import path
 from . import views
+from django.urls import re_path, include
+from notifications import urls as notifications_urls
+
 from .views import (
     LogInView, LogOutView, ChangeProfileView, HomeView, CountersView,
-    CarsView, VoteView, ArchiveView, InfoView, DocsView, SupportView, execute_script, SetLichView
+    CarsView, VoteView, ArchiveView, InfoView, DocsView, SupportView, execute_script, SetLichView, mark_notifications_as_read
 #     ChangeEmailView, ChangeProfileView, ChangePasswordView,
 #     RestorePasswordView, RestorePasswordDoneView,
 )
@@ -22,6 +25,8 @@ urlpatterns = [
     path('set_lich/', SetLichView.as_view(), name='set_lich'),
     path('authorization_signature/', execute_script, name='execute_script'),
     path('logout/', LogOutView.as_view(), name='logout'),
+    re_path(r'^inbox/notifications/', include(notifications_urls, namespace='notifications')),
+    path('mark-as-read/', mark_notifications_as_read, name='mark_as_read'),
 #     path('restore/password/', RestorePasswordView.as_view(), name='restore_password'),
 #     path('restore/password/done/', RestorePasswordDoneView.as_view(), name='restore_password_done'),
 #     path('change/password/', ChangePasswordView.as_view(), name='change_password'),
