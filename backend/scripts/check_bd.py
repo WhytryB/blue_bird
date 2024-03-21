@@ -24,6 +24,8 @@ django.setup()
 from django.contrib.auth import get_user_model
 User = get_user_model()
 
+print(BD_PASSWORD, BD_LOGIN.encode(encoding='UTF-8',errors='strict'), BD_HOST, BD_LOGIN, BD_PASSWORD)
+
 session = requests.Session()
 session.auth = HTTPBasicAuth("Федоров".encode(encoding='UTF-8',errors='strict'), BD_PASSWORD)
 
