@@ -1953,6 +1953,41 @@ def login(driver, session):
         pass
 
 
+def parse_terminal(driver, session):
+    response_lic_scheta = session.get('http://osbb.tais-dtb.com:8280/OSBB/odata/standard.odata/Catalog_ЛицевыеСчета?$format=json&$expand=*',
+                                                                headers={'Content-Type': 'application/json; charset=utf-8'})
+    skip = False
+    response_lic_scheta = response_lic_scheta.json()
+    response_lic_scheta = response_lic_scheta.get('value', [])
+    for current_schet in response_lic_scheta:
+        if 'кв.' in current_schet["ОбъектЛицевогоСчета"]['Description'] or 'оф' in current_schet["ОбъектЛицевогоСчета"]['Description']:
+            name_kv = current_schet["ОбъектЛицевогоСчета"]['Description']
+            Description_schet = current_schet["Description"]
+            Code_schet = current_schet["Code"]
+            Ref_Key = current_schet['Ref_Key']
+
+
+            url_sait = f"https://admin.asn.od.ua/frontend/frontend.php?myname=varf&uid={Description_schet}&var=account.code.paycode&parent_win_id=winp_3&win_id=winp_5&_=1711650069659"
+            try:
+                driver.get(url_sait)
+                time.sleep(1)
+                # Находим все элементы <tr> с помощью XPath
+                param = driver.find_element(By.XPATH, "//table//tr[2]/td[2]").text.strip()
+            except Exception as e:
+                skip = True
+                print("Error", e, " skip")
+            if not skip:
+                try:
+                    data = {'Комментарий': param}
+                    response_lic = session.patch(f"http://osbb.tais-dtb.com:8280/OSBB/odata/standard.odata/Catalog_ЛицевыеСчета(guid'{Ref_Key}')?$format=json",
+                                                 headers={'Content-Type': 'application/json; charset=utf-8'},
+                                                 json=data)
+                    print(f"Status code: {response_lic.status_code}")
+                except Exception as e:
+                    print(e)
+                    breakpoint()
+
+
 def main(type):
     driver = webdriver.Chrome()
     driver.maximize_window()
@@ -1987,6 +2022,9 @@ def main(type):
     elif type == 'doplata':
         login(driver, session)
         parse_doplate(driver, session)
+    elif type == 'coment':
+        login(driver, session)
+        parse_terminal(driver, session)
 
 
 
@@ -2004,5 +2042,5 @@ def main(type):
 
 
 if __name__ == '__main__':
-        main(type='doplata')
+        main(type='coment')
 

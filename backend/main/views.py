@@ -38,10 +38,12 @@ import re
 import random
 import locale
 from notifications.signals import notify
-
+from liqpay import LiqPay
 
 osbb = OSBB()
 locale.setlocale(locale.LC_TIME, 'uk_UA.UTF-8')
+liqpay = LiqPay("bqCbtIAPI2JXLhmzFzfIjnvzoMZsCx+yCElEKuPJ5qkSV9k0V3hR4mhc8jSYMZBNAU+VQILGbqFT33GwUrHMCQ==",
+                "JGJRnXQqoqg+51jXxpKS4+37aJ0EeL756g8VNLPGAuHQipVi8u7TGr7Kbm28vgVIEciSYtUg0Y26hLkRH+4sID0EJDGQu48W1W3GxoE14TF3ZrTnO42II88M0KOk2CjU")
 
 def parse_date(date_str):
     return datetime.strptime(date_str, "%d.%m.%Y %H:%M:%S")
@@ -928,6 +930,78 @@ class ArchiveView(LoginRequiredMixin, TemplateView):
 class InfoView(LoginRequiredMixin, TemplateView):
     template_name = 'info.html'
 
+
+class PaymentView(LoginRequiredMixin, TemplateView):
+    template_name = 'payment.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['user'] = self.request.user
+
+        lich = self.request.session.get('lich')
+        lich_response = osbb.get_lich_user(self.request.user.username)
+        if lich_response:
+            result_dict = {}
+            for item in lich_response:
+                number = item["number"]
+                name = item["name"]
+                code = item["code"]
+                if number in result_dict:
+                    # Если запись существует, добавляем текущее имя к существующему значению
+                    result_dict[number]["codes"].append(code)
+                    result_dict[number]["names"].append(name)
+                else:
+                    # Если записи нет, создаем новую запись в словаре
+                    result_dict[number] = {"codes": [code], "names": [name]}
+
+            result_list = []
+
+            for key, value in result_dict.items():
+                kv_codes = [code for code in value['codes'] if 'кв.' in value['names'][value['codes'].index(code)]]
+                result_list.append(
+                    {"number": key, "codes": ', '.join(kv_codes[:1]), "names": ', '.join(value['names'])})
+
+            if not lich:
+                context['lich_selected'] = result_list[0]['codes']
+                context['lich_selected_name'] = result_list[0]['names']
+            else:
+                context['lich_selected'] = lich
+                context['lich_selected_name'] = self.request.session.get('lich_name')
+
+            try:
+                selected_terminal = [i for i in lich_response if i['code'] == context['lich_selected']][0]['Комментарий']
+            except Exception as e:
+                selected_terminal = None
+
+            context['selected_terminal'] = selected_terminal
+
+            context["privat_url"] = f"https://next.privat24.ua/payments/form/%7B%22token%22%3A%22f12d8b187763a58e9de55ec6c5c02e2fp52n1tya%22%2C%22personalAccount%22%3A%22{selected_terminal}%22%7D"
+
+
+            ostatok_response = osbb.get_ostatok_user(context['lich_selected'])
+            if ostatok_response:
+                ostatok_value = ostatok_response.get('ostatok', 0).encode('latin1').decode('unicode-escape')
+                ostatok_value = ''.join(ostatok_value.split()).replace(',', '.')
+
+                context['ostatok'] =  round(float(ostatok_value), 2) if float(ostatok_value) > 0 else 0
+            return context
+
+    def post(self, request, *args, **kwargs):
+        terminal = request.POST.get('terminal')
+        amount = request.POST.get('amount')
+        if terminal:
+            lich = self.request.session.get('lich')
+            lich_kv = self.request.session.get('lich_name')
+            html = liqpay.cnb_form({
+                "action": "pay",
+                "amount": amount,
+                "currency": "UAH",
+                "description": "description text",
+                "order_id": terminal,
+                "version": "3"
+            })
+            return JsonResponse({'status': 'success', 'data': html})
+        return JsonResponse({'status': 'false'})
 
 class DocsView(LoginRequiredMixin, TemplateView):
     template_name = 'docs.html'

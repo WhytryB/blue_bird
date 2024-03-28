@@ -4,7 +4,7 @@ from django.urls import re_path, include
 from notifications import urls as notifications_urls
 
 from .views import (
-    LogInView, LogOutView, ChangeProfileView, HomeView, CountersView,
+    LogInView, LogOutView, ChangeProfileView, HomeView, CountersView, PaymentView,
     CarsView, VoteView, ArchiveView, InfoView, DocsView, SupportView, execute_script, SetLichView, mark_notifications_as_read
 #     ChangeEmailView, ChangeProfileView, ChangePasswordView,
 #     RestorePasswordView, RestorePasswordDoneView,
@@ -21,6 +21,7 @@ urlpatterns = [
     path('docs/', DocsView.as_view(), name='docs'),
     path('support/', SupportView.as_view(), name='support'),
     path('profile/', ChangeProfileView.as_view(), name='profile'),
+    path('payment/', PaymentView.as_view(), name='payment'),
     path('login/', LogInView.as_view(), name='login'),
     path('set_lich/', SetLichView.as_view(), name='set_lich'),
     path('authorization_signature/', execute_script, name='execute_script'),

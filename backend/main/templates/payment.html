@@ -1,0 +1,156 @@
+{% extends 'base.html' %}
+
+{% block title %}Cars{% endblock %}
+{% block extra_styles %}
+<link rel="stylesheet" href="../static/css/plugins/select2.min.css">
+{% endblock %}
+{% block content %}
+<main>
+    <div class="main-wrapper payment">
+
+        <div class="container-fluid">
+
+            <div class="card card p-20px mb-25px">
+                <div class="card-title text-uppercase font-weight-bold font-25px mb-30px">Оплата</div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card-body">
+                                <h5 class="card-title">Оплата LiqPay</h5>
+                                <p class="card-text">Застосовується при необхідності зробити оплатою за картками:</br> Visa / Mastercard / Apple Pay / Google Pay. </p>
+                                <a href="https://www.liqpay.ua/" class="mt-3 mb-3">Детальніше про LiqPay</a>
+
+                                <table cellpadding="3">
+                                <tbody><tr>
+                                        <th> Сума яка буде оплачена з картки</th>
+                                        <td>
+                                            <input type="number" id="lq1" name="lq1" class="form-control" placeholder="Сума з картки"  value="{{ostatok}}">
+
+                                        </td>
+                                </tr>
+
+                                <tr>
+                                        <th> Послуги Банку (1.5%) </th>
+                                        <td>
+                                              <input type="number" id="lq2" name="lq2" class="form-control" value="" readonly>
+
+                                        </td>
+                                </tr>
+                                <tr>
+                                        <th> Буде зараховано на рахунок </th>
+                                        <td>
+                                             <input type="number" id="lq3" name="lq3" class="form-control" placeholder="Буде зараховано" readonly value="">
+
+                                        </td>
+                                </tr></tbody></table>
+
+                                <button type="button" href="" id='liqpay' class="centered-div pl-5 pr-5 mt-2 btn btn-lg btn-primary">Оплатити</button>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                                <div class="card-body">
+                                    <h5 class="card-title">Приват24</h5>
+                                    <p class="card-text">Приват24, посилання для швидкої оплати.<br> Комісія за посилання Швидко оплатити становить <b>1%</b>.</p>
+                                    <p class="card-text">Ваш пошуковий реквізіт: {{selected_terminal}}.</p>
+                                    <a href="{{privat_url}}" target="_priv24" class="centered-div pl-5 pr-5 mt-3 btn btn-lg btn-primary">Перейти до оплати Приват 24 Швидко оплатити</a>
+                                </div>
+                        </div>
+                    </div>
+            </div>
+        </div>
+
+         <div class="container-fluid">
+
+            <div class="card card p-20px mb-25px">
+                <div class="card-title text-uppercase font-weight-bold font-25px mb-30px">ПриватБанк звичайний режим</div>
+                    <div class="row">
+                        <div class="col-md-12">
+
+                                <div class="card-body">
+                                     <p class="card-text">Комісія становить <b>1 грн</b>.</p>
+                                    <h5 class="pt-2 pb-1 card-title">Інструкція з оплати:</h5>
+
+                                    <ul>
+                                        <li class="card-text pb-5">Відкрийте приват24 і авторизуйтесь у ньому.
+                                           <br> Далі йдемо по Сервіси - Платежи - Комунальні платежи
+                                        </li>
+                                         <div class="user-thumb">
+                                            <img class="" src="../static/img/oplata-1.png" alt="Image">
+                                        </div>
+                                         <li class="card-text pt-5 pb-5">Заповнюемо одержувача IBAN  UA613052990000026000044903898 та вибираемо ОСББ «СИНІЙ ПТАХ»
+                                             <br> Перший раз скопіюйте у форму наведені нижче дані. <b>зверніть увагу, на зображенні вказані дані лише для прикладу</b>
+                                        </li>
+                                         <div class="user-thumb">
+                                            <img class="" src="../static/img/oplata-2.png" alt="Image">
+                                        </div>
+                                        <li class="card-text pt-5  pb-5">Пошуковий реквізіт, він же особовий рахунок, він же платіжний код  {{selected_terminal}}
+                                             <br> Поле Призначення  буде заповнено так - <b>Комунальні послуги о/р {{selected_terminal}}</b>
+                                            <br>Сума будь яка, ваш платіж  <b>{{ostatok}} Грн</b>
+                                        </li>
+                                         <div class="user-thumb">
+                                            <img class="" src="../static/img/oplata-3.png" alt="Image">
+                                        </div>
+                                        <div class="user-thumb">
+                                            <img class="" src="../static/img/oplata-4.png" alt="Image">
+                                        </div>
+                                        <li class="card-text pt-5 pb-5">Підтвердження має мати такий вигляд (Комісія)
+                                        </li>
+                                         <div class="user-thumb">
+                                            <img class="" src="../static/img/oplata-5.png" alt="Image">
+                                        </div>
+                                    </ul>
+                                    <!-- Добавьте дополнительный HTML-код сюда -->
+                                </div>
+                        </div>
+                    </div>
+            </div>
+        </div>
+    </div>
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script>
+
+
+document.addEventListener("DOMContentLoaded", function() {
+    calculateAmount();
+});
+
+document.getElementById("lq1").addEventListener("input", function() {
+    calculateAmount();
+});
+
+function calculateAmount() {
+    var lq1 = parseFloat(document.getElementById("lq1").value);
+    var commissionPercentage = 1.5; // Комиссия в процентах
+    var bankCommission = 1; // Комиссия банка
+    var commission = (lq1 * commissionPercentage) / 100;
+    var result = lq1 - commission;
+    bankCommission = lq1 - result;
+    document.getElementById("lq2").value = bankCommission.toFixed(2);
+    document.getElementById("lq3").value = result.toFixed(2);
+}
+
+$('#liqpay').on('click', function() {
+    $.ajax({
+        type: 'POST',
+        url: '/payment/',
+        data: {'terminal':'{{selected_terminal}}','amount': parseFloat(document.getElementById("lq1").value)},
+        headers: { 'X-CSRFToken': $('input[name="csrfmiddlewaretoken"]').val() },
+        success: function(response) {
+              // Очищаем контейнер сообщений перед добавлением новых сообщений
+
+
+               if (response && response.status === 'success') {
+                      $('#liqpay').replaceWith(response.data);
+               }
+
+        },
+        error: function(xhr, status, error) {
+            console.error('Произошла ошибка при выполнении запроса', error);
+        }
+    });
+});
+</script>
+{% endblock %}
