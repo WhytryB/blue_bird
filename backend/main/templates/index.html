@@ -15,6 +15,55 @@
 
                             <div class="card p-20px mb-25px">
 
+                                <div class="card-title text-uppercase font-weight-bold font-15px">Інформація</div>
+                                <div >
+
+
+                                <div id="selected_kv_data" class="ui-tabs-panel">
+                                    <div class="table-responsive">
+                                        <table class="table table-striped table-bordered">
+                                            <thead>
+                                            <tr>
+                                                <th style="padding-top: 20px; padding-bottom: 20px;" rowspan="2" class="text-uppercase text-center font-12px">Квартира</th>
+                                                <th rowspan="2" class="text-uppercase text-center font-12px">Дім</th>
+                                                <th rowspan="2" class="text-uppercase text-center font-12px">Тип</th>
+                                                <th rowspan="2" class="text-uppercase text-center font-12px">Під'їзд</th>
+                                                <th rowspan="2" class="text-uppercase text-center font-12px">Поверх</th>
+                                                <th rowspan="2" class="text-uppercase text-center font-12px">Площа</th>
+                                                <th rowspan="2" class="text-uppercase text-center font-12px">Кількість Комнат</th>
+                                            </tr>
+
+
+                                            </thead>
+                                            <tbody>
+                                                 <tr>
+
+                                                    <td class="font-14px text-center">{{selected_kv_data.name}}</td>
+                                                    <td class="font-14px text-center">{{selected_kv_data.Дом}}</td>
+                                                    <td class="font-14px text-center">{{selected_kv_data.ЖилойФонд}}</td>
+                                                    <td class="font-14px text-center">{{selected_kv_data.Подъезд}}</td>
+
+                                                     <td class="font-14px text-center">{{selected_kv_data.Этаж}}</td>
+                                                    <td class="font-14px text-center">{{selected_kv_data.Площадь}}</td>
+                                                     <td class="font-14px text-center">{{selected_kv_data.КоличествоКомнат}}</td>
+
+
+
+                                                 </tr>
+
+
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+
+                                </div>
+                            </div>
+
+
+                            <div class="card p-20px mb-25px">
+
                                 <div class="card-title text-uppercase font-weight-bold font-15px">Рахунок</div>
                                 <div >
                                     <ul class="tab-navigation inline pill ui-tabs-panel">
@@ -37,12 +86,12 @@
                                         <table class="table table-striped table-bordered">
                                             <thead>
                                             <tr>
-                                                <th style="padding-top: 20px; padding-bottom: 20px;" rowspan="2" class="text-uppercase font-12px">Найменування</th>
-                                                <th rowspan="2" class="text-uppercase font-12px">Од. Вим.</th>
-                                                <th rowspan="2" class="text-uppercase font-12px">Значення</th>
-                                                <th rowspan="2" class="text-uppercase font-12px">Тариф</th>
-                                                <th rowspan="2" class="text-uppercase font-12px">Нараховано</th>
-                                                <th rowspan="2" class="text-uppercase font-12px">Сплачено</th>
+                                                <th style="padding-top: 20px; padding-bottom: 20px;" rowspan="2" class="text-uppercase text-center font-12px">Найменування</th>
+                                                <th rowspan="2" class="text-uppercase text-center font-12px">Од. Вим.</th>
+                                                <th rowspan="2" class="text-uppercase text-center font-12px">Значення</th>
+                                                <th rowspan="2" class="text-uppercase text-center font-12px">Тариф</th>
+                                                <th rowspan="2" class="text-uppercase text-center font-12px">Нараховано</th>
+                                                <th rowspan="2" class="text-uppercase text-center font-12px">Сплачено</th>
                                             </tr>
 
 
@@ -90,14 +139,18 @@
                                 <div class="card-title text-uppercase font-weight-bold font-15px">Комунальні послуги</div>
                                 <div class="card-body" id="tabs-v3">
 
-                                    <ul class="tab-navigation inline pill">
-                                        <li><a href="#tabs1">2024</a></li>
-                                        <li><a href="#tabs2">2023</a></li>
+                                    <ul style=" overflow-x: auto; white-space: nowrap; " class="tab-navigation inline pill">
+                                        <li><a href="#tabs1">2024 Разрахунок</a></li>
+                                        <li><a href="#tabs3">2024 Показники</a></li>
+                                        <li><a href="#tabs2">2023 Разрахунок</a></li>
+                                        <li><a href="#tabs4">2023 Показники</a></li>
 
                                     </ul>
                                     <div style="    width: 100%; height: 400px; /* Задайте желаемую высоту */">
                                         <canvas id="tabs1" class="pt-20px"></canvas>
                                         <canvas id="tabs2" class="pt-20px"></canvas>
+                                        <canvas id="tabs3" class="pt-20px"></canvas>
+                                        <canvas id="tabs4" class="pt-20px"></canvas>
                                     </div>
 
                                 </div>
@@ -299,6 +352,41 @@
                 type: 'bar',
                 data: {
                     labels: {{available_months_list_2024|safe}},
+                    datasets: {{yslygi_2024_chart|safe}}
+                },
+                options: {
+                    scales: {
+                        x: {
+                            stacked: true
+                        },
+                        y: {
+                            stacked: true
+                        }
+                    },
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                        },
+                        zoom: {
+                            pan: {
+                                enabled: true,
+                                mode: 'x', // Разрешить горизонтальное прокручивание
+                            },
+                            zoom: {
+                                enabled: true,
+                                mode: 'x', // Разрешить горизонтальное масштабирование
+                            }
+                        }
+                    }
+                },
+            });
+
+            new Chart(document.getElementById('tabs3'), {
+                type: 'bar',
+                data: {
+                    labels: {{available_months_list_2024|safe}},
                     datasets: {{yslygi_2024|safe}}
                 },
                 options: {
@@ -323,6 +411,63 @@
             });
 
             new Chart(document.getElementById('tabs2'), {
+                type: 'bar',
+                data: {
+                    labels: {{available_months_list_2023|safe}},
+                    datasets: {{yslygi_2023_chart|safe}}
+                    // datasets: [
+                    //     {
+                    //         label: 'Електроенергія ',
+                    //         data: [420, 150, 320, 50, 250, 120, 170, 164, 145, 135, 110, 185],
+                    //         backgroundColor: [
+                    //             '#dcc424',
+                    //         ],
+                    //         hoverOffset: 4
+                    //     },{
+                    //         label: 'Теплова енергія ',
+                    //         data: [320, 150, 320, 150, 250, 120, 170, 164, 145, 135, 110, 185],
+                    //         backgroundColor: [
+                    //             '#c90000',
+                    //         ],
+                    //         hoverOffset: 4
+                    //     },{
+                    //         label: 'Вода',
+                    //         data: [220, 150, 120, 50, 250, 120, 170, 164, 145, 135, 110, 185],
+                    //         backgroundColor: [
+                    //             '#008be8',
+                    //         ],
+                    //         hoverOffset: 4
+                    //     },
+                    //     {
+                    //         label: 'Газ',
+                    //         data: [200, 170, 300, 50, 350, 120, 165, 225, 245, 187, 194, 136],
+                    //         backgroundColor: [
+                    //             '#878e98'
+                    //         ],
+                    //         hoverOffset: 4
+                    //     }
+                    // ]
+                },
+                options: {
+                    scales: {
+                        x: {
+                            stacked: true
+                        },
+                        y: {
+                            stacked: true
+                        }
+                    },
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                        }
+                    }
+                },
+            });
+
+            new Chart(document.getElementById('tabs4'), {
                 type: 'bar',
                 data: {
                     labels: {{available_months_list_2023|safe}},

@@ -75,21 +75,25 @@ class HomeView(LoginRequiredMixin, TemplateView):
                     # Если записи нет, создаем новую запись в словаре
                     result_dict[number] = {"codes": [code], "names": [name]}
 
-            result_list = []
+            result_list_kv = []
 
             for key, value in result_dict.items():
                 kv_codes = [code for code in value['codes'] if 'кв.' in value['names'][value['codes'].index(code)]]
-                result_list.append(
+                result_list_kv.append(
                     {"number": key, "codes": ', '.join(kv_codes[:1]), "names": ', '.join(value['names'])})
 
-            lich_response = result_list
 
             if not self.request.session.get('lich'):
-                self.request.session['lich'] = result_list[0]['codes']
-                self.request.session['lich_name'] = result_list[0]['names']
+                self.request.session['lich'] = result_list_kv[0]['codes']
+                self.request.session['lich_name'] = result_list_kv[0]['names']
 
-            context['lich_selected'] = self.request.session.get('lich', result_list[0]['codes'])
+            context['lich_selected'] = self.request.session.get('lich', result_list_kv[0]['codes'])
+            try:
+                selected_kv_data = [i for i in lich_response if i['code'] == context['lich_selected']][0]
+            except Exception as e:
+                selected_kv_data = None
 
+            context['selected_kv_data'] = selected_kv_data
             ostatok_response = osbb.get_ostatok_user(context['lich_selected'])
             if ostatok_response:
                 ostatok_value = ostatok_response.get('ostatok', 0).encode('latin1').decode('unicode-escape')
@@ -134,9 +138,27 @@ class HomeView(LoginRequiredMixin, TemplateView):
 
                 formatted_data_2023 = {}
                 formatted_data_2024 = {}
+                colors = [
+                    {'backgroundColor': 'rgba(255, 99, 132, 0.2)', 'borderColor': 'rgba(255, 99, 132, 1)'},
+                    {'backgroundColor': 'rgba(54, 162, 235, 0.2)', 'borderColor': 'rgba(54, 162, 235, 1)'},
+                    {'backgroundColor': 'rgba(255, 206, 86, 0.2)', 'borderColor': 'rgba(255, 206, 86, 1)'},
+                    {'backgroundColor': 'rgba(75, 192, 192, 0.2)', 'borderColor': 'rgba(75, 192, 192, 1)'},
+                    {'backgroundColor': 'rgba(153, 102, 255, 0.2)', 'borderColor': 'rgba(153, 102, 255, 1)'},
+                    {'backgroundColor': 'rgba(255, 159, 64, 0.2)', 'borderColor': 'rgba(255, 159, 64, 1)'},
+                    {'backgroundColor': 'rgba(255, 0, 0, 0.2)', 'borderColor': 'rgba(255, 0, 0, 1)'},
+                    {'backgroundColor': 'rgba(0, 255, 0, 0.2)', 'borderColor': 'rgba(0, 255, 0, 1)'},
+                    {'backgroundColor': 'rgba(0, 0, 255, 0.2)', 'borderColor': 'rgba(0, 0, 255, 1)'},
+                    {'backgroundColor': 'rgba(255, 255, 0, 0.2)', 'borderColor': 'rgba(255, 255, 0, 1)'},
+                    {'backgroundColor': 'rgba(255, 0, 255, 0.2)', 'borderColor': 'rgba(255, 0, 255, 1)'},
+                    {'backgroundColor': 'rgba(0, 255, 255, 0.2)', 'borderColor': 'rgba(0, 255, 255, 1)'},
+                    {'backgroundColor': 'rgba(128, 128, 128, 0.2)', 'borderColor': 'rgba(128, 128, 128, 1)'},
+                    {'backgroundColor': 'rgba(0, 0, 0, 0.2)', 'borderColor': 'rgba(0, 0, 0, 1)'}
+                ]
 
                 for priboru_key in pribory_response_list:
+                    removed_color = colors.pop(0)
                     for data_motn in date_range:
+
                         name_key = priboru_key['ПриборУчета']
                         month_key = f"{data_motn.month}.{data_motn.year}"
                         current_pribor_data = sorted_data.get(name_key)
@@ -161,54 +183,33 @@ class HomeView(LoginRequiredMixin, TemplateView):
                         if data_motn.year == 2023:
                             if name_key not in formatted_data_2023:
 
-                                name = f"{current_pribor_data[0]['Услуга']}".lower()
-
-                                if 'електроенергія' in name:
-                                    random_color = '#dcc424'
-                                elif 'холодне' in name:
-                                    random_color = '#008be8'
-                                elif 'опалення' in name or 'опалювання' in name:
-                                    random_color = '#bf7b06'
-                                elif 'гаряче' in name:
-                                    random_color = '#bf0906'
-                                else:
-                                    random_color = "#{:06x}".format(random.randint(0, 0xFFFFFF))
 
                                 group_data = {
                                     "label": f"{current_pribor_data[0]['ПриборУчета']}",
                                     "data": [],
-                                    "backgroundColor": [random_color],
+                                    "borderWidth": 1,
                                     "hoverOffset": 4,
                                     "number": key.split('/')[0],
                                     "name": key.split('/')[1],
                                     "year": data_motn.year
                                 }
+                                group_data.update(removed_color)
                                 formatted_data_2023.update({name_key: group_data})
                             formatted_data_2023[name_key]['data'].append(added_data)
                         elif data_motn.year == 2024:
                             if name_key not in formatted_data_2024:
 
-                                name = f"{current_pribor_data[0]['Услуга']}".lower()
-
-                                if 'електроенергія' in name:
-                                    random_color = '#dcc424'
-                                elif 'холодне' in name:
-                                    random_color = '#008be8'
-                                elif 'опалення' in name or 'опалювання' in name:
-                                    random_color = '#bf7b06'
-                                elif 'гаряче' in name:
-                                    random_color = '#bf0906'
-                                else:
-                                    random_color = "#{:06x}".format(random.randint(0, 0xFFFFFF))
 
                                 group_data = {
                                     "label": f"{current_pribor_data[0]['ПриборУчета']}",
                                     "data": [],
-                                    "backgroundColor": [random_color],
+
                                     "hoverOffset": 4,
+                                    "borderWidth": 1,
 
                                     "year": data_motn.year
                                 }
+                                group_data.update(removed_color)
                                 formatted_data_2024.update({name_key: group_data})
                             formatted_data_2024[name_key]['data'].append(added_data)
 
@@ -233,8 +234,45 @@ class HomeView(LoginRequiredMixin, TemplateView):
                 # Получение месяцев для 2024 года
                 result_months_2024 = [ukrainian_months[date.month - 1] for date in date_range if date.year == 2024]
 
+                temp_form_2023 = [{**values} for key, values in formatted_data_2023.items()]
+                temp_form_2024 = [{**values} for key, values in formatted_data_2024.items()]
                 context['yslygi_2023'] = [{**values} for key, values in formatted_data_2023.items()]
                 context['yslygi_2024'] = [{**values} for key, values in formatted_data_2024.items()]
+
+                for pribor_chart in temp_form_2023:
+                    values = pribor_chart['data']
+
+                    diff = [max(0, round(values[i + 1] - values[i], 2)) for i in range(len(values) - 1)]
+                    # Добавляем первый элемент списка данных, так как для него разницу не вычисляем
+                    diff.insert(0, 0)
+
+                    # Заменяем исходные данные на новые вычисленные разницы
+                    pribor_chart['data'] = diff
+
+                for pribor_chart in temp_form_2024:
+                    values = pribor_chart['data']
+
+                    diff = [max(0, round(values[i + 1] - values[i], 2)) for i in range(len(values) - 1)]
+                    # Добавляем первый элемент списка данных, так как для него разницу не вычисляем
+                    diff.insert(0, 0)
+                    last_value_2023 = pribor_chart['data'][0]
+                    last_value_2024 = pribor_chart['data'][0]
+                    for i in  context['yslygi_2023']:
+                        if i['label'] == pribor_chart['label']:
+                            last_value_2023 = i['data'][-1]
+
+                    temp_first_value_2024 = round(last_value_2024 - last_value_2023, 2)
+                    if temp_first_value_2024 < 0:
+                        temp_first_value_2024 = 0
+                    diff[0] = temp_first_value_2024
+
+
+                    # Заменяем исходные данные на новые вычисленные разницы
+                    pribor_chart['data'] = diff
+
+                context['yslygi_2023_chart'] = temp_form_2023
+                context['yslygi_2024_chart'] = temp_form_2024
+
 
 
 
@@ -343,14 +381,14 @@ class HomeView(LoginRequiredMixin, TemplateView):
 
 
         else:
-            lich_response = []
+            result_list_kv = []
             context['formatted_datetime'] = "Спробуйте пізніше"
             context['ostatok'] = "-0"
             result = {
                 "services": {"оплата": 0, "нарах": 0, "quantity_narah": 0, "name": ""},
                 "month_name": ""}
             context['raschet'] = [result]
-        context['lich'] = lich_response
+        context['lich'] = result_list_kv
         return context
 
 

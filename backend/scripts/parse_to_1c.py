@@ -414,7 +414,7 @@ def parse_schetchiki(driver, session):
             uid = uid_match.group(1) if uid_match else None
             cid = cid_match.group(1) if cid_match else None
 
-            if "ТОВ" not in name and "ПП" not in name and "-Інвест" not in name and active_element == "Открыто" and is_pokazania != "НЕТ":
+            if "ТОВ" not in name and "ПП" not in name and "-Інвест" not in name and active_element == "Открыто" and is_pokazania != "НЕТ" and ser_number_element == '1' or ser_number_element == '2':
                     # Выводим результаты
                     print("Имя:", name)
                     print("Type:", type_element)
@@ -427,6 +427,8 @@ def parse_schetchiki(driver, session):
                     print("cid", cid)
 
                     print("=" * 50)
+
+                    ser_number_element = ser_number_element + '/' + kv_number
 
 
                     odata_url = f'{BD_HOST}Catalog_ПриборыУчета?$format=json&$filter=ЗаводскойНомер eq \'{ser_number_element}\''
@@ -559,13 +561,22 @@ def parse_schetchiki_doc(driver, session):
     # Находим все элементы <tr> с помощью XPath
     rows = driver.find_elements(By.XPATH, "//tr[contains(@id, 'row_')]")
     data = []
+    not_sorted_data = []
     # Перебираем каждый элемент <tr>
+    list_not_added = []
     for row in rows[1:]:
         # Извлекаем имя из элемента <b> внутри текущего <tr>
         try:
             name_element = row.find_element(By.XPATH, ".//td[2]")
             name = name_element.text.strip()
             search_name = name
+
+            style = row.get_attribute("style")
+
+            # Проверяем, содержит ли атрибут style нужный цвет
+            is_style_pass = True
+            if style and "#c0c0c0" in style:
+                is_style_pass = False
 
             type_element = row.find_element(By.XPATH, ".//td[4]").text.strip()
             kv_number = row.find_element(By.XPATH, ".//td[3]").text.strip()
@@ -588,7 +599,7 @@ def parse_schetchiki_doc(driver, session):
             uid = uid_match.group(1) if uid_match else None
             cid = cid_match.group(1) if cid_match else None
 
-            if "ТОВ" not in name and "ПП" not in name and "-Інвест" not in name and active_element == "Открыто" and is_pokazania != "НЕТ":
+            if "ТОВ" not in name and "ПП" not in name and "-Інвест" not in name and active_element == "Открыто" and is_pokazania != "НЕТ" and is_style_pass:
                     # Выводим результаты
                     print("Имя:", name)
                     print("Type:", type_element)
@@ -601,12 +612,21 @@ def parse_schetchiki_doc(driver, session):
                     print("cid", cid)
 
                     print("=" * 50)
+                    next_stage = 500
+                    if ser_number_element == '1' or ser_number_element == '2':
+                        ser_number_element = ser_number_element + '/' + kv_number
 
-                    odata_url = f'{BD_HOST}Catalog_ПриборыУчета?$format=json&$filter=ЗаводскойНомер eq \'{ser_number_element}\''
-                    print(odata_url)
-                    response = session.get(odata_url , headers={'Content-Type': 'application/json; charset=utf-8'})
+
+                    if 'нет. сер' in ser_number_element:
+                        list_not_added.append(f"https://admin.asn.od.ua/frontend/frontend.php?myname=cvl&uid={uid}&cid={cid}&op=form&do_form=1&parent_win_id=winp_17&win_id=winp_18")
+                    else:
+
+                        odata_url = f'{BD_HOST}Catalog_ПриборыУчета?$format=json&$filter=ЗаводскойНомер eq \'{ser_number_element}\''
+                        print(odata_url)
+                        response = session.get(odata_url , headers={'Content-Type': 'application/json; charset=utf-8'})
+                        next_stage = response.status_code
 #                         print(response.status_code, response.json())
-                    if response.status_code == 200:
+                    if next_stage == 200:
                         response = response.json()
                         if len(response.get('value', [])) > 0:
                             code_pribor = response['value'][0]["Code"]
@@ -650,9 +670,8 @@ def parse_schetchiki_doc(driver, session):
                                     driver.switch_to.window(handles[1])
 
                                     # Работа с новой вкладкой (например, выполнение каких-то действий)
-
+                                    time.sleep(1)
                                     driver.get(pokazania_url)
-
                                     pokaz_rows = driver.find_elements(By.XPATH, "//tr")
 
                                     # Перебираем каждый элемент <tr>
@@ -696,19 +715,19 @@ def parse_schetchiki_doc(driver, session):
                                         print(f"Exists {len(response.get('value', []))}")
                                         lic_chet = response['value'][0]["Description"]
 
+                                        data = {"КодУслуги": yslyga_code, "КодПриборУчета": code_pribor,"КодЗдания": "000000001", "ОрганизацияКод": "00-000001","ОбъектУстановки": lic_chet, "ОбъектУстановки2": process_string_kv(kv_number),"СписокПоказаний": pokazania_list}
 
-                                for i in pokazania_list:
+                                        not_sorted_data.append(data)
 
-
-                                    data = {"КодУслуги": yslyga_code,"КодЗдания": "000000001",  "ОрганизацияКод": "00-000001", "ОбъектУстановки": lic_chet,  "ОбъектУстановки2": process_string_kv(kv_number), "СтрокаДата": i["ДатаУстановки"], "КодПриборУчета": code_pribor, "ПоказаниеПредыдущее": i["ПрошлоеПоказание"], "Показание": i["НачальноеПоказание"]}
-                                    breakpoint()
-                                    response = session.post('http://osbb.tais-dtb.com:8280/OSBB/hs/API/Ввод' , headers={'Content-Type': 'application/json; charset=utf-8'}, json=data)
-                                    if response.status_code != 200:
-                                        print(response.status_code, response.text)
-                                        breakpoint()
                                     else:
-                                        print(f"Прибор учета {ser_number_element} успешно добавлен для лицевого счета {lic_chet}")
-                                        print("Exist")
+                                        print(f"Not exists")
+                                else:
+                                    print(f"Not exists")
+
+
+
+                                #"СтрокаДата": i["ДатаУстановки"], "КодПриборУчета": code_pribor, "ПоказаниеПредыдущее": i["ПрошлоеПоказание"], "Показание": i["НачальноеПоказание"]
+
 
                                 print("-----------------------")
 
@@ -727,6 +746,68 @@ def parse_schetchiki_doc(driver, session):
             print(e)
             breakpoint()
             Error_list.append({"name": name, "response": response})
+
+    from collections import defaultdict
+    grouped_data = defaultdict(lambda: defaultdict(list))
+
+    # Группировка данных
+    for item in not_sorted_data:
+        for entry in item['СписокПоказаний']:
+            # Получаем код услуги и месяц из даты установки
+            service_code = item['КодУслуги']
+            month = entry['ДатаУстановки'][4:6]
+
+            # Добавляем данные в группированный словарь
+            grouped_data[service_code][month].append({
+                'ОбъектУстановки': item['ОбъектУстановки'],
+                'КодПриборУчета': item['КодПриборУчета'],
+                'ОбъектУстановки2': item['ОбъектУстановки2'],
+                'Дата': entry['ДатаУстановки'],
+                'КодУслуги': item['КодУслуги'],
+                'КодЗдания': item['КодЗдания'],
+                'ОрганизацияКод': item['ОрганизацияКод'],
+                'ПрошлоеПоказание': entry['ПрошлоеПоказание'],
+                'НачальноеПоказание': entry['НачальноеПоказание']
+            })
+
+
+    for service_code, months_data in grouped_data.items():
+        print(f'Данные для услуги с кодом {service_code}:')
+        for month, data in months_data.items():
+            print(f'Месяц: {month}')
+
+            # Создаем словарь для отслеживания уникальных комбинаций
+            unique_records = {}
+
+            # Проходим по каждой записи и добавляем ее в словарь, если она уникальна
+            for record in data:
+                key = (record["КодПриборУчета"], record["ОбъектУстановки"], record["ОбъектУстановки2"])
+                if key not in unique_records:
+                    unique_records[key] = record
+                else:
+                    # Если запись уже есть, сравниваем даты и НачальноеПоказание
+                    existing_record = unique_records[key]
+                    if record["Дата"] > existing_record["Дата"] or (
+                            record["Дата"] == existing_record["Дата"] and record["НачальноеПоказание"] >
+                            existing_record["НачальноеПоказание"]):
+                        unique_records[key] = record
+
+            # Преобразуем словарь обратно в список
+            unique_data = list(unique_records.values())
+
+            json_data = {"КодУслуги": service_code, "СтрокаДата": unique_data[0]["Дата"],
+                         "КодЗдания": "000000001", "ОрганизацияКод": "00-000001", "Показания": unique_data}
+
+            response = session.post('http://osbb.tais-dtb.com:8280/OSBB/hs/API/Ввод' , headers={'Content-Type': 'application/json; charset=utf-8'}, json=json_data)
+            if response.status_code != 200:
+                print(response.status_code, response.text)
+                breakpoint()
+            else:
+                print(f"Прибор учета {service_code} успешно добавлен для лицевого счета для  {month}")
+                print("___________")
+
+
+
 
 
 def parse_nachislenia(driver, session):
@@ -1310,559 +1391,542 @@ def  parse_oplata(driver, session):
 
 
 def parse_doplate(driver, session):
-    url_sait = "https://admin.asn.od.ua/frontend/frontend.php?storevars=1&form_id=srkf_form&uriid=0&do_system=1&mod=nl&but_name=&page=&pagesize=&pagesmax=&do_dom=1&dom_default=523&dom=523&ugroup=1097&ugroup_option=0&lsstr=%D0%9E%D1%81%D0%B0%D0%B4%D1%87%D0%B0&do_lsid=1&lsid=12195&type_id_default=203&type_id=204&type_id_t=0&avars%5B%5D=do_kv_num&avars%5B%5D=kv_num_type&avars%5B%5D=kv_num_t&avars%5B%5D=kv_num&kv_num=49&kv_num_t=1&date_do=202402&date1=2024-02-01&date2=2023-12-01&abon=kp&subrah=ct.1&serv=abon&variant=ppl&sbtn0=%D0%9F%D0%BE%D0%B8%D1%81%D0%BA&myname=nll&do_select=1&do_form=1&do_create=1"
-
-
-
+    response_lic_scheta = session.get('http://osbb.tais-dtb.com:8280/OSBB/odata/standard.odata/Catalog_ЛицевыеСчета?$format=json&$expand=*',
+                                                                headers={'Content-Type': 'application/json; charset=utf-8'})
     skip = False
-    tip = "203"
-    name_kv = "кв. № 168"
-    try:
-        driver.get(url_sait)
-        time.sleep(1)
-        # Находим все элементы <tr> с помощью XPath
-        rows = driver.find_elements(By.XPATH, "//tr[contains(@id, 'row_')]")
-    except Exception as e:
-        skip = True
-        print("Error", e, " skip")
-
-    data = []
-    if not skip:
-        # Перебираем каждый элемент <tr>
-        not_sorted_data = []
-        not_sorted_data_oplata = []
-        iiter = 1
-        try:
-            for row in rows[1:]:
-                # Извлекаем имя из элемента <b> внутри текущего <tr>
-
-                name = row.find_element(By.XPATH, ".//td[3]").text.strip()
-                parse_obj = row.find_element(By.XPATH, ".//td[4]").text.strip()
-                tip_obj = row.find_element(By.XPATH, ".//td[7]").text.strip()
-                parse_coment = row.find_element(By.XPATH, ".//td[9]").text.strip()
-                parse_data = row.find_element(By.XPATH, ".//td[10]").text.strip()
-                parse_znach = row.find_element(By.XPATH, ".//td[11]").text.strip()
-                parse_oplata = row.find_element(By.XPATH, ".//td[12]").text.strip()
-                parse_summa = row.find_element(By.XPATH, ".//td[13]").text.strip()
-
-                if "ТОВ" not in name and "ПП" not in name and "-Інвест" not in name and "Аккаунт для тестів" not in name:
-                    # Выводим результаты
-                    print("Имя:", name)
-                    print("Parse_obj:", parse_obj)
-                    print("Tip_obj:", tip_obj)
-                    print("Parse_coment:", parse_coment)
-                    print("Parse_data:", parse_data)
-                    print("Parse_znach:", parse_znach)
-                    print("Parse_summa:", parse_summa)
-
-                    print("=" * 50)
-                    if parse_summa != "":
-                        not_sorted_data.append(
-                            {"name": name, "parse_obj": parse_obj, "tip_obj": tip_obj, "parse_coment": parse_coment,
-                             "parse_data": parse_data, "parse_znach": parse_znach, "parse_summa": parse_summa})
-                    elif parse_oplata != "":
-                        not_sorted_data_oplata.append(
-                            {"name": name, "parse_obj": parse_obj, "tip_obj": tip_obj, "parse_coment": parse_coment,
-                             "parse_data": parse_data, "parse_znach": parse_znach, "parse_oplata": parse_oplata})
-                    else:
-                        pass
-
-            sorted_data = []
-            sorted_data_oplata = []
-            sorted_data = sorted(not_sorted_data, key=itemgetter("parse_obj", "parse_data"))
-            sorted_data_oplata = sorted(not_sorted_data_oplata, key=itemgetter("parse_obj", "parse_data"))
-
-            # Группируем данные по значениям Parse_obj и Parse_data
-            result = []
-            for _, group in itertools.groupby(sorted_data, key=itemgetter("parse_obj", "parse_data")):
-                result.append(list(group))
-            result_oplata = []
-            for _, group in itertools.groupby(sorted_data_oplata, key=itemgetter("parse_obj", "parse_data")):
-                result_oplata.append(list(group))
+    response_lic_scheta = response_lic_scheta.json()
+    response_lic_scheta = response_lic_scheta.get('value', [])
+    for current_schet in response_lic_scheta:
+        if 'кв.' in current_schet["ОбъектЛицевогоСчета"]['Description']:
+            name_kv = current_schet["ОбъектЛицевогоСчета"]['Description']
+            Description_schet = current_schet["Description"]
+            Code_schet = current_schet["Code"]
 
 
-        except Exception as e:
-            print(e)
+            url_sait = f"https://admin.asn.od.ua/frontend/frontend.php?storevars=1&form_id=srkf_form&uriid=0&do_system=1&mod=nl&but_name=&page=&pagesize=&pagesmax=&do_dom=1&dom_default=523&dom=523&ugroup=1097&ugroup_option=0&lsstr=%D0%B4%D0%BE%D0%BC%D0%BE%D1%84%D0%BE%D0%BD&do_lsid=1&lsid=12132&type_id_default=203&type_id=203&type_id_t=0&avars%5B%5D=do_kv_num&avars%5B%5D=kv_num_type&avars%5B%5D=kv_num_t&avars%5B%5D=kv_num&kv_num=65&kv_num_t=1&do_date_do=1&date_do=202403&date1=2024-02-01&date2=2023-12-01&abon=kp&subrah=ct.1&serv=move&variant=ppl&sbtn0=%D0%9F%D0%BE%D0%B8%D1%81%D0%BA&myname=nll&do_select=1&do_form=1&do_create=1"
+            try:
+                driver.get(url_sait)
+                time.sleep(1)
+                # Находим все элементы <tr> с помощью XPath
+                rows = driver.find_elements(By.XPATH, "//tr[contains(@id, 'row_')]")
+            except Exception as e:
+                skip = True
+                print("Error", e, " skip")
 
-        try:
+            data = []
+            if not skip:
+                # Перебираем каждый элемент <tr>
+                not_sorted_data = []
+                not_sorted_data_oplata = []
+                iiter = 1
+                try:
+                    for row in rows[1:]:
+                        # Извлекаем имя из элемента <b> внутри текущего <tr>
 
-            for current_spisok in result:
+                        name = row.find_element(By.XPATH, ".//td[3]").text.strip()
+                        parse_obj = row.find_element(By.XPATH, ".//td[4]").text.strip()
+                        tip_obj = row.find_element(By.XPATH, ".//td[7]").text.strip()
+                        parse_coment = row.find_element(By.XPATH, ".//td[9]").text.strip()
+                        parse_data = row.find_element(By.XPATH, ".//td[10]").text.strip()
+                        parse_znach = row.find_element(By.XPATH, ".//td[11]").text.strip()
+                        parse_oplata = row.find_element(By.XPATH, ".//td[12]").text.strip()
+                        parse_summa = row.find_element(By.XPATH, ".//td[13]").text.strip()
 
-                is_lic_name = name_kv
-                print(is_lic_name)
-                odata_url = f'{BD_HOST}Catalog_ЛицевыеСчета?$format=json&$expand=ОбъектЛицевогоСчета&$filter=ОбъектЛицевогоСчета/Description eq \'{is_lic_name}\''
-                print(odata_url)
-                response = session.get(odata_url, headers={'Content-Type': 'application/json; charset=utf-8'})
+                        if "ТОВ" not in name and "ПП" not in name and "-Інвест" not in name and "Аккаунт для тестів" not in name:
+                            # Выводим результаты
+                            print("Имя:", name)
+                            print("Parse_obj:", parse_obj)
+                            print("Tip_obj:", tip_obj)
+                            print("Parse_coment:", parse_coment)
+                            print("Parse_data:", parse_data)
+                            print("Parse_znach:", parse_znach)
+                            print("Parse_summa:", parse_summa)
 
-                #                         print(response.status_code, response.json())
-                if response.status_code == 200:
-                    response = response.json()
-                    if len(response.get('value', [])) > 0:
-                        print(f"Exists {len(response.get('value', []))}")
-                        lic_chet_code = response['value'][0]["Description"]
-                        lic_chet_code_main = response['value'][0]["Code"]
-
-                        current_data = current_spisok[0]['parse_data']
-                        совпадение = re.search(r'\d{2}:\d{2} \d{2}.\d{2}.\d{4}', current_data)
-                        строкаДатаВремя = совпадение.group(0)
-
-                        # Преобразуем строку даты и времени в формате строки
-                        толькоДата = datetime.strptime(строкаДатаВремя, '%H:%M %d.%m.%Y').strftime('%d.%m.%Y')
-                        current_data = perform_data(толькоДата)
-
-                        source_time = datetime.strptime(current_data, '%Y%m%d')
-
-                        # Форматирование объекта datetime в нужный формат
-                        result_time_str = source_time.strftime('%Y-%m-%dT00:00:00')
-
-                        comments = ""
-                        pribors_list = []
-                        summa_doc = 0
-                        for this_spisok in current_spisok:
-                            comments += this_spisok['parse_coment'] + " / "
-
-                            yslyga_code = None
-                            if "Електроенергія" in this_spisok["tip_obj"]:
-                                yslyga_code = "000000016"
-
-                            elif "Холодна вода" in this_spisok["tip_obj"]:
-                                yslyga_code = "000000048"
-
-                            elif "Гаряча вода" in this_spisok["tip_obj"]:
-                                yslyga_code = "000000044"
-
-                            elif "Опалення" in this_spisok["tip_obj"]:
-                                yslyga_code = "000000009"
-
-                            elif "УБПТ" in this_spisok["tip_obj"]:
-                                yslyga_code = "000000002"
-
-                            elif "Парковка" in this_spisok["tip_obj"]:
-                                if this_spisok['parse_coment'].count('(') >= 2:
-                                    try:
-                                        yslyga_code = "000000039"
-                                        is_lic_name_yslyga = process_string_type(this_spisok['parse_coment'], "204")
-                                        print(is_lic_name_yslyga)
-                                        odata_url = f'{BD_HOST}Catalog_ЛицевыеСчета?$format=json&$expand=ОбъектЛицевогоСчета&$filter=ОбъектЛицевогоСчета/Description eq \'{is_lic_name_yslyga}\''
-                                        print(odata_url)
-                                        response = session.get(odata_url, headers={
-                                            'Content-Type': 'application/json; charset=utf-8'})
-                                        if response.status_code == 200:
-                                            response = response.json()
-                                            if len(response.get('value', [])) > 0:
-                                                print(f"Exists {len(response.get('value', []))}")
-                                                lic_chet_code = response['value'][0]["Description"]
-                                                lic_chet_code_main_yslyga = response['value'][0]["Code"]
-
-                                                try:
-                                                    single_summa = float(
-                                                        this_spisok["parse_summa"].replace(" ", "").replace(",", "."))
-                                                except Exception as e:
-                                                    print("!!!!!!! Problem with", this_spisok["parse_summa"])
-                                                    print(e)
-                                                    single_summa = 0
-
-                                                data = {"Коментарий": this_spisok['parse_coment'],
-                                                        "КодЗдания": "000000001",
-                                                        "ОрганизацияКод": "00-000001",
-                                                        "СтрокаДата": current_data,
-                                                        "ПриборыУчета": [{"КодУслуги": "000000039",
-                                                                          "ЛицевойСчетИмя": lic_chet_code_main_yslyga,
-                                                                          "СуммаНачислено": single_summa,
-                                                                          "Количество": this_spisok["parse_znach"]
-                                                                          }]}
-
-                                                response = session.post(
-                                                    'http://osbb.tais-dtb.com:8280/OSBB/hs/API/Начисления',
-                                                    headers={'Content-Type': 'application/json; charset=utf-8'},
-                                                    json=data)
-                                                if response.status_code != 200:
-                                                    print(response.status_code, response.text)
-                                                    Error_list.append(
-                                                        {"name": lic_chet_code, "response": response.text})
-
-                                                else:
-                                                    print(f"Начисление успешно добавлено для Парковка")
-                                    except Exception as e:
-                                        breakpoint()
-                                        print(e)
-                                else:
-                                    yslyga_code = "000000039"
-
-
-                            elif "Кладові" in this_spisok["tip_obj"]:
-                                if this_spisok['parse_coment'].count('(') >= 2:
-                                    try:
-                                        yslyga_code = "Р00000110"
-                                        is_lic_name_yslyga = process_string_type(this_spisok['parse_coment'], "209")
-                                        print(is_lic_name_yslyga)
-                                        odata_url = f'{BD_HOST}Catalog_ЛицевыеСчета?$format=json&$expand=ОбъектЛицевогоСчета&$filter=ОбъектЛицевогоСчета/Description eq \'{is_lic_name_yslyga}\''
-                                        print(odata_url)
-                                        response = session.get(odata_url, headers={
-                                            'Content-Type': 'application/json; charset=utf-8'})
-                                        if response.status_code == 200:
-                                            response = response.json()
-                                            if len(response.get('value', [])) > 0:
-                                                print(f"Exists {len(response.get('value', []))}")
-                                                lic_chet_code = response['value'][0]["Description"]
-                                                lic_chet_code_main_yslyga = response['value'][0]["Code"]
-
-                                                try:
-                                                    single_summa = float(
-                                                        this_spisok["parse_summa"].replace(" ", "").replace(",", "."))
-                                                except Exception as e:
-                                                    print("!!!!!!! Problem with", this_spisok["parse_summa"])
-                                                    print(e)
-                                                    single_summa = 0
-
-
-                                                data = {"Коментарий": this_spisok['parse_coment'],
-                                                        "КодЗдания": "000000001",
-                                                        "ОрганизацияКод": "00-000001",
-                                                        "СтрокаДата": current_data,
-                                                        "ПриборыУчета": [{"КодУслуги": "Р00000109",
-                                                                          "ЛицевойСчетИмя": lic_chet_code_main_yslyga,
-                                                                          "СуммаНачислено": single_summa,
-                                                                          "Количество": this_spisok["parse_znach"]
-                                                                          }]}
-
-                                                response = session.post(
-                                                    'http://osbb.tais-dtb.com:8280/OSBB/hs/API/Начисления',
-                                                    headers={'Content-Type': 'application/json; charset=utf-8'},
-                                                    json=data)
-                                                if response.status_code != 200:
-                                                    print(response.status_code, response.text)
-                                                    Error_list.append(
-                                                            {"name": lic_chet_code, "response": response.text})
-
-                                                else:
-                                                    print(f"Начисление успешно добавлено для УСЛУГИ")
-                                    except Exception as e:
-                                        breakpoint()
-                                        print(e)
-                                else:
-                                    yslyga_code = "Р00000110"
-
-                            elif "Вивіз сміття" in this_spisok["tip_obj"]:
-                                yslyga_code = "000000038"
-
-                            elif "Утримання котельні" in this_spisok["tip_obj"]:
-                                yslyga_code = "000000007"
-
-                            elif "Охрана" in this_spisok["tip_obj"]:
-                                yslyga_code = "000000028"
-                            elif "Перенесення" in this_spisok["tip_obj"]:
-                                yslyga_code = "Р00000002"
-
-                            elif "Нерегулярные" in this_spisok["tip_obj"]:
-                                yslyga_code = "000000025"
+                            print("=" * 50)
+                            if parse_summa != "":
+                                not_sorted_data.append(
+                                    {"name": name, "parse_obj": parse_obj, "tip_obj": tip_obj, "parse_coment": parse_coment,
+                                     "parse_data": parse_data, "parse_znach": parse_znach, "parse_summa": parse_summa})
+                            elif parse_oplata != "":
+                                not_sorted_data_oplata.append(
+                                    {"name": name, "parse_obj": parse_obj, "tip_obj": tip_obj, "parse_coment": parse_coment,
+                                     "parse_data": parse_data, "parse_znach": parse_znach, "parse_oplata": parse_oplata})
                             else:
-                                yslyga_code = "000000025"
+                                pass
+
+                    sorted_data = []
+                    sorted_data_oplata = []
+                    sorted_data = sorted(not_sorted_data, key=itemgetter("parse_obj", "parse_data"))
+                    sorted_data_oplata = sorted(not_sorted_data_oplata, key=itemgetter("parse_obj", "parse_data"))
+
+                    # Группируем данные по значениям Parse_obj и Parse_data
+                    result = []
+                    for _, group in itertools.groupby(sorted_data, key=itemgetter("parse_obj", "parse_data")):
+                        result.append(list(group))
+                    result_oplata = []
+                    for _, group in itertools.groupby(sorted_data_oplata, key=itemgetter("parse_obj", "parse_data")):
+                        result_oplata.append(list(group))
 
 
-                            try:
-                                single_summa = float(this_spisok["parse_summa"].replace(" ", "").replace(",", "."))
-                            except Exception as e:
-                                print("!!!!!!! Problem with", this_spisok["parse_summa"])
-                                print(e)
-                                single_summa = 0
+                except Exception as e:
+                    print(e)
 
-                            pribors_list.append({"КодУслуги": yslyga_code,
-                                                 "ЛицевойСчетИмя": lic_chet_code_main,
-                                                 "СуммаНачислено": single_summa,
-                                                 "Количество": this_spisok["parse_znach"]
-                                                 })
+                try:
 
-                            summa_doc += single_summa
-
-
-                        #                         print(response.status_code, response.json())
-
-
-                        data = {"Коментарий": comments, "КодЗдания": "000000001", "ОрганизацияКод": "00-000001",
-                                "СтрокаДата": current_data, "ПриборыУчета": pribors_list}
+                    for current_spisok in result:
 
 
 
-                        response = session.post('http://osbb.tais-dtb.com:8280/OSBB/hs/API/Начисления',
-                                                headers={'Content-Type': 'application/json; charset=utf-8'},
-                                                json=data)
-                        if response.status_code != 200:
-                            print(response.status_code, response.text)
-
-                            Error_list.append({"name": lic_chet_code, "response": response.text})
-
-                        else:
-                            print(f"Начисление успешно добавлено для лицевого счета")
 
 
-                    else:
-                        print("Нет такого лицевого счета")
-                else:
-                    print("Ошибка такого лицевого счета")
+                                lic_chet_code = Description_schet
+                                lic_chet_code_main = Code_schet
+
+                                current_data = current_spisok[0]['parse_data']
+                                совпадение = re.search(r'\d{2}:\d{2} \d{2}.\d{2}.\d{4}', current_data)
+                                строкаДатаВремя = совпадение.group(0)
+
+                                # Преобразуем строку даты и времени в формате строки
+                                толькоДата = datetime.strptime(строкаДатаВремя, '%H:%M %d.%m.%Y').strftime('%d.%m.%Y')
+                                current_data = perform_data(толькоДата)
+
+                                source_time = datetime.strptime(current_data, '%Y%m%d')
+
+                                # Форматирование объекта datetime в нужный формат
+                                result_time_str = source_time.strftime('%Y-%m-%dT00:00:00')
+
+                                comments = ""
+                                pribors_list = []
+                                summa_doc = 0
+                                for this_spisok in current_spisok:
+                                    comments += this_spisok['parse_coment'] + " / "
+
+                                    yslyga_code = None
+                                    if "Електроенергія" in this_spisok["tip_obj"]:
+                                        yslyga_code = "000000016"
+
+                                    elif "Холодна вода" in this_spisok["tip_obj"]:
+                                        yslyga_code = "000000048"
+
+                                    elif "Гаряча вода" in this_spisok["tip_obj"]:
+                                        yslyga_code = "000000044"
+
+                                    elif "Опалення" in this_spisok["tip_obj"]:
+                                        yslyga_code = "000000009"
+
+                                    elif "УБПТ" in this_spisok["tip_obj"]:
+                                        yslyga_code = "000000002"
+
+                                    elif "Парковка" in this_spisok["tip_obj"]:
+                                        if this_spisok['parse_coment'].count('(') >= 2:
+                                            try:
+                                                yslyga_code = "000000039"
+                                                is_lic_name_yslyga = process_string_type(this_spisok['parse_coment'], "204")
+                                                print(is_lic_name_yslyga)
+                                                odata_url = f'{BD_HOST}Catalog_ЛицевыеСчета?$format=json&$expand=ОбъектЛицевогоСчета&$filter=ОбъектЛицевогоСчета/Description eq \'{is_lic_name_yslyga}\''
+                                                print(odata_url)
+                                                response = session.get(odata_url, headers={
+                                                    'Content-Type': 'application/json; charset=utf-8'})
+                                                if response.status_code == 200:
+                                                    response = response.json()
+                                                    if len(response.get('value', [])) > 0:
+                                                        print(f"Exists {len(response.get('value', []))}")
+                                                        lic_chet_code = response['value'][0]["Description"]
+                                                        lic_chet_code_main_yslyga = response['value'][0]["Code"]
+
+                                                        try:
+                                                            single_summa = float(
+                                                                this_spisok["parse_summa"].replace(" ", "").replace(",", "."))
+                                                        except Exception as e:
+                                                            print("!!!!!!! Problem with", this_spisok["parse_summa"])
+                                                            print(e)
+                                                            single_summa = 0
+
+                                                        data = {"Коментарий": this_spisok['parse_coment'],
+                                                                "КодЗдания": "000000001",
+                                                                "ОрганизацияКод": "00-000001",
+                                                                "СтрокаДата": current_data,
+                                                                "ПриборыУчета": [{"КодУслуги": "000000039",
+                                                                                  "ЛицевойСчетИмя": lic_chet_code_main_yslyga,
+                                                                                  "СуммаНачислено": single_summa,
+                                                                                  "Количество": this_spisok["parse_znach"]
+                                                                                  }]}
+
+                                                        response = session.post(
+                                                            'http://osbb.tais-dtb.com:8280/OSBB/hs/API/Начисления',
+                                                            headers={'Content-Type': 'application/json; charset=utf-8'},
+                                                            json=data)
+                                                        if response.status_code != 200:
+                                                            print(response.status_code, response.text)
+                                                            Error_list.append(
+                                                                {"name": lic_chet_code, "response": response.text})
+
+                                                        else:
+                                                            print(f"Начисление успешно добавлено для Парковка")
+                                            except Exception as e:
+                                                breakpoint()
+                                                print(e)
+                                        else:
+                                            yslyga_code = "000000039"
 
 
-            for current_spisok in result_oplata:
+                                    elif "Кладові" in this_spisok["tip_obj"]:
+                                        if this_spisok['parse_coment'].count('(') >= 2:
+                                            try:
+                                                yslyga_code = "Р00000110"
+                                                is_lic_name_yslyga = process_string_type(this_spisok['parse_coment'], "209")
+                                                print(is_lic_name_yslyga)
+                                                odata_url = f'{BD_HOST}Catalog_ЛицевыеСчета?$format=json&$expand=ОбъектЛицевогоСчета&$filter=ОбъектЛицевогоСчета/Description eq \'{is_lic_name_yslyga}\''
+                                                print(odata_url)
+                                                response = session.get(odata_url, headers={
+                                                    'Content-Type': 'application/json; charset=utf-8'})
+                                                if response.status_code == 200:
+                                                    response = response.json()
+                                                    if len(response.get('value', [])) > 0:
+                                                        print(f"Exists {len(response.get('value', []))}")
+                                                        lic_chet_code = response['value'][0]["Description"]
+                                                        lic_chet_code_main_yslyga = response['value'][0]["Code"]
 
-                is_lic_name = name_kv
-                print(is_lic_name)
-                odata_url = f'{BD_HOST}Catalog_ЛицевыеСчета?$format=json&$expand=ОбъектЛицевогоСчета&$filter=ОбъектЛицевогоСчета/Description eq \'{is_lic_name}\''
-                print(odata_url)
-                response = session.get(odata_url, headers={'Content-Type': 'application/json; charset=utf-8'})
+                                                        try:
+                                                            single_summa = float(
+                                                                this_spisok["parse_summa"].replace(" ", "").replace(",", "."))
+                                                        except Exception as e:
+                                                            print("!!!!!!! Problem with", this_spisok["parse_summa"])
+                                                            print(e)
+                                                            single_summa = 0
 
-                #                         print(response.status_code, response.json())
-                if response.status_code == 200:
-                    response = response.json()
-                    if len(response.get('value', [])) > 0:
-                        print(f"Exists {len(response.get('value', []))}")
-                        lic_chet_code = response['value'][0]["Description"]
-                        lic_chet_code_main = response['value'][0]["Code"]
 
-                        current_data = current_spisok[0]['parse_data']
-                        совпадение = re.search(r'\d{2}:\d{2} \d{2}.\d{2}.\d{4}', current_data)
-                        строкаДатаВремя = совпадение.group(0)
+                                                        data = {"Коментарий": this_spisok['parse_coment'],
+                                                                "КодЗдания": "000000001",
+                                                                "ОрганизацияКод": "00-000001",
+                                                                "СтрокаДата": current_data,
+                                                                "ПриборыУчета": [{"КодУслуги": "Р00000109",
+                                                                                  "ЛицевойСчетИмя": lic_chet_code_main_yslyga,
+                                                                                  "СуммаНачислено": single_summa,
+                                                                                  "Количество": this_spisok["parse_znach"]
+                                                                                  }]}
 
-                        # Преобразуем строку даты и времени в формате строки
-                        толькоДата = datetime.strptime(строкаДатаВремя, '%H:%M %d.%m.%Y').strftime('%d.%m.%Y')
-                        current_data = perform_data(толькоДата)
+                                                        response = session.post(
+                                                            'http://osbb.tais-dtb.com:8280/OSBB/hs/API/Начисления',
+                                                            headers={'Content-Type': 'application/json; charset=utf-8'},
+                                                            json=data)
+                                                        if response.status_code != 200:
+                                                            print(response.status_code, response.text)
+                                                            Error_list.append(
+                                                                    {"name": lic_chet_code, "response": response.text})
 
-                        source_time = datetime.strptime(current_data, '%Y%m%d')
+                                                        else:
+                                                            print(f"Начисление успешно добавлено для УСЛУГИ")
+                                            except Exception as e:
+                                                breakpoint()
+                                                print(e)
+                                        else:
+                                            yslyga_code = "Р00000110"
 
-                        # Форматирование объекта datetime в нужный формат
-                        result_time_str = source_time.strftime('%Y-%m-%dT00:00:00')
+                                    elif "Вивіз сміття" in this_spisok["tip_obj"]:
+                                        yslyga_code = "000000038"
 
-                        comments = ""
-                        pribors_list = []
-                        summa_doc = 0
-                        for this_spisok in current_spisok:
-                            comments += this_spisok['parse_coment'] + " / "
+                                    elif "Утримання котельні" in this_spisok["tip_obj"]:
+                                        yslyga_code = "000000007"
 
-                            yslyga_code = None
-                            if "Електроенергія" in this_spisok["tip_obj"]:
-                                yslyga_code = "000000016"
+                                    elif "Охрана" in this_spisok["tip_obj"]:
+                                        yslyga_code = "000000028"
+                                    elif "Перенесення" in this_spisok["tip_obj"]:
+                                        yslyga_code = "Р00000002"
 
-                            elif "Холодна вода" in this_spisok["tip_obj"]:
-                                yslyga_code = "000000048"
+                                    elif "Нерегулярные" in this_spisok["tip_obj"]:
+                                        yslyga_code = "000000025"
+                                    else:
+                                        yslyga_code = "000000025"
 
-                            elif "Гаряча вода" in this_spisok["tip_obj"]:
-                                yslyga_code = "000000044"
 
-                            elif "Опалення" in this_spisok["tip_obj"]:
-                                yslyga_code = "000000009"
-
-                            elif "УБПТ" in this_spisok["tip_obj"]:
-                                yslyga_code = "000000002"
-
-                            elif "Кладові" in this_spisok["tip_obj"]:
-
-                                if this_spisok['parse_coment'].count('(') >= 2:
                                     try:
-                                        yslyga_code = "Р00000109"
-                                        is_lic_name_yslyga = process_string_type(this_spisok['parse_coment'], "209")
-                                        print(is_lic_name_yslyga)
-                                        odata_url = f'{BD_HOST}Catalog_ЛицевыеСчета?$format=json&$expand=ОбъектЛицевогоСчета&$filter=ОбъектЛицевогоСчета/Description eq \'{is_lic_name_yslyga}\''
-                                        print(odata_url)
-                                        response = session.get(odata_url, headers={
-                                            'Content-Type': 'application/json; charset=utf-8'})
-                                        if response.status_code == 200:
-                                            response = response.json()
-                                            if len(response.get('value', [])) > 0:
-                                                print(f"Exists {len(response.get('value', []))}")
-                                                lic_chet_code = response['value'][0]["Description"]
-                                                lic_chet_code_main_yslyga = response['value'][0]["Code"]
-
-                                                try:
-                                                    single_summa = float(
-                                                        this_spisok["parse_oplata"].replace(" ", "").replace(",", "."))
-                                                except Exception as e:
-                                                    print("!!!!!!! Problem with", this_spisok["parse_oplata"])
-                                                    print(e)
-                                                    single_summa = 0
-
-                                                data = {"Коментарий": this_spisok['parse_coment'],
-                                                        "ЛицевойСчетИмя": lic_chet_code_main_yslyga,
-                                                        "ОрганизацияКод": "00-000001", "ОбщСумма": single_summa,
-                                                        "Аванс": False,
-                                                        "СтрокаДата": current_data,
-                                                        "ПриборыУчета": [{"КодУслуги": "Р00000109",
-                                                                          "Сумма": single_summa
-                                                                          }]}
-
-                                                response = session.post(
-                                                    'http://osbb.tais-dtb.com:8280/OSBB/hs/API/Оплата',
-                                                    headers={'Content-Type': 'application/json; charset=utf-8'},
-                                                    json=data)
-                                                if response.status_code != 200:
-                                                    print(response.status_code, response.text)
-                                                    print("Попытка с Авансом")
-                                                    data = {"Коментарий": this_spisok['parse_coment'],
-                                                            "ЛицевойСчетИмя": lic_chet_code_main_yslyga,
-                                                            "ОрганизацияКод": "00-000001",
-                                                            "ОбщСумма": single_summa, "Аванс": True,
-                                                            "СтрокаДата": current_data,
-                                                            "ПриборыУчета": [{"КодУслуги": "Р00000109",
-                                                                              "Сумма": single_summa
-                                                                              }]}
-
-                                                    response = session.post(
-                                                        'http://osbb.tais-dtb.com:8280/OSBB/hs/API/Оплата',
-                                                        headers={
-                                                            'Content-Type': 'application/json; charset=utf-8'},
-                                                        json=data)
-                                                    if response.status_code != 200:
-                                                        print(response.status_code, response.text)
-                                                        breakpoint()
-
-                                                        Error_list.append(
-                                                            {"name": lic_chet_code, "response": response.text})
-
-                                                else:
-                                                    print(f"Начисление успешно добавлено для УСЛУГИ")
+                                        single_summa = float(this_spisok["parse_summa"].replace(" ", "").replace(",", "."))
                                     except Exception as e:
-                                        breakpoint()
+                                        print("!!!!!!! Problem with", this_spisok["parse_summa"])
                                         print(e)
+                                        single_summa = 0
+
+                                    pribors_list.append({"КодУслуги": yslyga_code,
+                                                         "ЛицевойСчетИмя": lic_chet_code_main,
+                                                         "СуммаНачислено": single_summa,
+                                                         "Количество": this_spisok["parse_znach"]
+                                                         })
+
+                                    summa_doc += single_summa
+
+
+                                #                         print(response.status_code, response.json())
+
+
+                                data = {"Коментарий": comments, "КодЗдания": "000000001", "ОрганизацияКод": "00-000001",
+                                        "СтрокаДата": current_data, "ПриборыУчета": pribors_list}
+
+
+
+                                response = session.post('http://osbb.tais-dtb.com:8280/OSBB/hs/API/Начисления',
+                                                        headers={'Content-Type': 'application/json; charset=utf-8'},
+                                                        json=data)
+                                if response.status_code != 200:
+                                    print(response.status_code, response.text)
+
+                                    Error_list.append({"name": lic_chet_code, "response": response.text})
+
                                 else:
-                                    yslyga_code = "Р00000109"
+                                    print(f"Начисление успешно добавлено для лицевого счета")
 
-                            elif "Парковка" in this_spisok["tip_obj"]:
+                    result_oplata = []
+                    for current_spisok in result_oplata:
 
-                                if this_spisok['parse_coment'].count('(') >= 2:
-                                    try:
+
+
+                                lic_chet_code = Description_schet
+                                lic_chet_code_main = Code_schet
+
+                                current_data = current_spisok[0]['parse_data']
+                                совпадение = re.search(r'\d{2}:\d{2} \d{2}.\d{2}.\d{4}', current_data)
+                                строкаДатаВремя = совпадение.group(0)
+
+                                # Преобразуем строку даты и времени в формате строки
+                                толькоДата = datetime.strptime(строкаДатаВремя, '%H:%M %d.%m.%Y').strftime('%d.%m.%Y')
+                                current_data = perform_data(толькоДата)
+
+                                source_time = datetime.strptime(current_data, '%Y%m%d')
+
+                                # Форматирование объекта datetime в нужный формат
+                                result_time_str = source_time.strftime('%Y-%m-%dT00:00:00')
+
+                                comments = ""
+                                pribors_list = []
+                                summa_doc = 0
+                                for this_spisok in current_spisok:
+                                    comments += this_spisok['parse_coment'] + " / "
+
+                                    yslyga_code = None
+                                    if "Електроенергія" in this_spisok["tip_obj"]:
+                                        yslyga_code = "000000016"
+
+                                    elif "Холодна вода" in this_spisok["tip_obj"]:
+                                        yslyga_code = "000000048"
+
+                                    elif "Гаряча вода" in this_spisok["tip_obj"]:
+                                        yslyga_code = "000000044"
+
+                                    elif "Опалення" in this_spisok["tip_obj"]:
+                                        yslyga_code = "000000009"
+
+                                    elif "УБПТ" in this_spisok["tip_obj"]:
+                                        yslyga_code = "000000002"
+
+                                    elif "Кладові" in this_spisok["tip_obj"]:
+
+                                        if this_spisok['parse_coment'].count('(') >= 2:
+                                            try:
+                                                yslyga_code = "Р00000109"
+                                                is_lic_name_yslyga = process_string_type(this_spisok['parse_coment'], "209")
+                                                print(is_lic_name_yslyga)
+                                                odata_url = f'{BD_HOST}Catalog_ЛицевыеСчета?$format=json&$expand=ОбъектЛицевогоСчета&$filter=ОбъектЛицевогоСчета/Description eq \'{is_lic_name_yslyga}\''
+                                                print(odata_url)
+                                                response = session.get(odata_url, headers={
+                                                    'Content-Type': 'application/json; charset=utf-8'})
+                                                if response.status_code == 200:
+                                                    response = response.json()
+                                                    if len(response.get('value', [])) > 0:
+                                                        print(f"Exists {len(response.get('value', []))}")
+                                                        lic_chet_code = response['value'][0]["Description"]
+                                                        lic_chet_code_main_yslyga = response['value'][0]["Code"]
+
+                                                        try:
+                                                            single_summa = float(
+                                                                this_spisok["parse_oplata"].replace(" ", "").replace(",", "."))
+                                                        except Exception as e:
+                                                            print("!!!!!!! Problem with", this_spisok["parse_oplata"])
+                                                            print(e)
+                                                            single_summa = 0
+
+                                                        data = {"Коментарий": this_spisok['parse_coment'],
+                                                                "ЛицевойСчетИмя": lic_chet_code_main_yslyga,
+                                                                "ОрганизацияКод": "00-000001", "ОбщСумма": single_summa,
+                                                                "Аванс": False,
+                                                                "СтрокаДата": current_data,
+                                                                "ПриборыУчета": [{"КодУслуги": "Р00000109",
+                                                                                  "Сумма": single_summa
+                                                                                  }]}
+
+                                                        response = session.post(
+                                                            'http://osbb.tais-dtb.com:8280/OSBB/hs/API/Оплата',
+                                                            headers={'Content-Type': 'application/json; charset=utf-8'},
+                                                            json=data)
+                                                        if response.status_code != 200:
+                                                            print(response.status_code, response.text)
+                                                            print("Попытка с Авансом")
+                                                            data = {"Коментарий": this_spisok['parse_coment'],
+                                                                    "ЛицевойСчетИмя": lic_chet_code_main_yslyga,
+                                                                    "ОрганизацияКод": "00-000001",
+                                                                    "ОбщСумма": single_summa, "Аванс": True,
+                                                                    "СтрокаДата": current_data,
+                                                                    "ПриборыУчета": [{"КодУслуги": "Р00000109",
+                                                                                      "Сумма": single_summa
+                                                                                      }]}
+
+                                                            response = session.post(
+                                                                'http://osbb.tais-dtb.com:8280/OSBB/hs/API/Оплата',
+                                                                headers={
+                                                                    'Content-Type': 'application/json; charset=utf-8'},
+                                                                json=data)
+                                                            if response.status_code != 200:
+                                                                print(response.status_code, response.text)
+                                                                breakpoint()
+
+                                                                Error_list.append(
+                                                                    {"name": lic_chet_code, "response": response.text})
+
+                                                        else:
+                                                            print(f"Начисление успешно добавлено для УСЛУГИ")
+                                            except Exception as e:
+                                                breakpoint()
+                                                print(e)
+                                        else:
+                                            yslyga_code = "Р00000109"
+
+                                    elif "Парковка" in this_spisok["tip_obj"]:
+
+                                        if this_spisok['parse_coment'].count('(') >= 2:
+                                            try:
+                                                yslyga_code = "000000039"
+                                                is_lic_name_yslyga = process_string_type(this_spisok['parse_coment'], "204")
+                                                print(is_lic_name_yslyga)
+                                                odata_url = f'{BD_HOST}Catalog_ЛицевыеСчета?$format=json&$expand=ОбъектЛицевогоСчета&$filter=ОбъектЛицевогоСчета/Description eq \'{is_lic_name_yslyga}\''
+                                                print(odata_url)
+                                                response = session.get(odata_url, headers={
+                                                    'Content-Type': 'application/json; charset=utf-8'})
+                                                if response.status_code == 200:
+                                                    response = response.json()
+                                                    if len(response.get('value', [])) > 0:
+                                                        print(f"Exists {len(response.get('value', []))}")
+                                                        lic_chet_code = response['value'][0]["Description"]
+                                                        lic_chet_code_main_yslyga = response['value'][0]["Code"]
+
+                                                        try:
+                                                            single_summa = float(
+                                                                this_spisok["parse_oplata"].replace(" ", "").replace(",", "."))
+                                                        except Exception as e:
+                                                            print("!!!!!!! Problem with", this_spisok["parse_oplata"])
+                                                            print(e)
+                                                            single_summa = 0
+
+                                                        data = {"Коментарий": this_spisok['parse_coment'],
+                                                                "ЛицевойСчетИмя": lic_chet_code_main_yslyga,
+                                                                "ОрганизацияКод": "00-000001",
+                                                                "ОбщСумма": single_summa,
+                                                                "СтрокаДата": current_data,
+                                                                "Аванс": False,
+                                                                "ПриборыУчета": [{"КодУслуги": "000000039",
+                                                                                  "Сумма": single_summa
+                                                                                  }]}
+
+                                                        response = session.post(
+                                                            'http://osbb.tais-dtb.com:8280/OSBB/hs/API/Оплата',
+                                                            headers={'Content-Type': 'application/json; charset=utf-8'},
+                                                            json=data)
+                                                        if response.status_code != 200:
+                                                            print(response.status_code, response.text)
+                                                            data = {"Коментарий": this_spisok['parse_coment'],
+                                                                    "ЛицевойСчетИмя": lic_chet_code_main_yslyga,
+                                                                    "ОрганизацияКод": "00-000001",
+                                                                    "Аванс": True,
+                                                                    "ОбщСумма": single_summa,
+                                                                    "СтрокаДата": current_data,
+                                                                    "ПриборыУчета": [{"КодУслуги": "000000039",
+                                                                                      "Сумма": single_summa
+                                                                                      }]}
+
+                                                            response = session.post(
+                                                                'http://osbb.tais-dtb.com:8280/OSBB/hs/API/Оплата',
+                                                                headers={
+                                                                    'Content-Type': 'application/json; charset=utf-8'},
+                                                                json=data)
+                                                            if response.status_code != 200:
+                                                                print(response.status_code, response.text)
+                                                                breakpoint()
+
+                                                                Error_list.append(
+                                                                    {"name": lic_chet_code, "response": response.text})
+
+                                                        else:
+                                                            print(f"Начисление успешно добавлено для ПАРКОВКИ")
+                                            except Exception as e:
+                                                breakpoint()
+                                                print(e)
+
+                                    elif "Нерегулярные" in this_spisok["tip_obj"]:
+                                        yslyga_code = "000000025"
+
+
+
+                                    elif "Вивіз сміття" in this_spisok["tip_obj"]:
+                                        yslyga_code = "000000038"
+
+                                    elif "Утримання котельні" in this_spisok["tip_obj"]:
+                                        yslyga_code = "000000007"
+
+                                    elif "Охрана" in this_spisok["tip_obj"]:
+                                        yslyga_code = "000000028"
+                                    elif "Перенесення" in this_spisok["tip_obj"]:
+                                        yslyga_code = "Р00000002"
+
+                                    else:
                                         yslyga_code = "000000039"
-                                        is_lic_name_yslyga = process_string_type(this_spisok['parse_coment'], "204")
-                                        print(is_lic_name_yslyga)
-                                        odata_url = f'{BD_HOST}Catalog_ЛицевыеСчета?$format=json&$expand=ОбъектЛицевогоСчета&$filter=ОбъектЛицевогоСчета/Description eq \'{is_lic_name_yslyga}\''
-                                        print(odata_url)
-                                        response = session.get(odata_url, headers={
-                                            'Content-Type': 'application/json; charset=utf-8'})
-                                        if response.status_code == 200:
-                                            response = response.json()
-                                            if len(response.get('value', [])) > 0:
-                                                print(f"Exists {len(response.get('value', []))}")
-                                                lic_chet_code = response['value'][0]["Description"]
-                                                lic_chet_code_main_yslyga = response['value'][0]["Code"]
 
-                                                try:
-                                                    single_summa = float(
-                                                        this_spisok["parse_oplata"].replace(" ", "").replace(",", "."))
-                                                except Exception as e:
-                                                    print("!!!!!!! Problem with", this_spisok["parse_oplata"])
-                                                    print(e)
-                                                    single_summa = 0
 
-                                                data = {"Коментарий": this_spisok['parse_coment'],
-                                                        "ЛицевойСчетИмя": lic_chet_code_main_yslyga,
-                                                        "ОрганизацияКод": "00-000001",
-                                                        "ОбщСумма": single_summa,
-                                                        "СтрокаДата": current_data,
-                                                        "Аванс": False,
-                                                        "ПриборыУчета": [{"КодУслуги": "000000039",
-                                                                          "Сумма": single_summa
-                                                                          }]}
 
-                                                response = session.post(
-                                                    'http://osbb.tais-dtb.com:8280/OSBB/hs/API/Оплата',
-                                                    headers={'Content-Type': 'application/json; charset=utf-8'},
-                                                    json=data)
-                                                if response.status_code != 200:
-                                                    print(response.status_code, response.text)
-                                                    data = {"Коментарий": this_spisok['parse_coment'],
-                                                            "ЛицевойСчетИмя": lic_chet_code_main_yslyga,
-                                                            "ОрганизацияКод": "00-000001",
-                                                            "Аванс": True,
-                                                            "ОбщСумма": single_summa,
-                                                            "СтрокаДата": current_data,
-                                                            "ПриборыУчета": [{"КодУслуги": "000000039",
-                                                                              "Сумма": single_summa
-                                                                              }]}
-
-                                                    response = session.post(
-                                                        'http://osbb.tais-dtb.com:8280/OSBB/hs/API/Оплата',
-                                                        headers={
-                                                            'Content-Type': 'application/json; charset=utf-8'},
-                                                        json=data)
-                                                    if response.status_code != 200:
-                                                        print(response.status_code, response.text)
-                                                        breakpoint()
-
-                                                        Error_list.append(
-                                                            {"name": lic_chet_code, "response": response.text})
-
-                                                else:
-                                                    print(f"Начисление успешно добавлено для ПАРКОВКИ")
+                                    try:
+                                        single_summa = float(this_spisok["parse_oplata"].replace(" ", "").replace(",", "."))
                                     except Exception as e:
-                                        breakpoint()
+                                        print("!!!!!!! Problem with", this_spisok["parse_oplata"])
                                         print(e)
+                                        single_summa = 0
 
-                                elif "Нерегулярные" in this_spisok["tip_obj"]:
-                                    yslyga_code = "000000025"
+                                    pribors_list.append({"КодУслуги": yslyga_code,
+                                                         "Сумма": single_summa
+                                                         })
+
+
+                                    summa_doc += single_summa
+
+                                data = {"Коментарий": comments, "ОбщСумма": summa_doc, "ЛицевойСчетИмя": lic_chet_code_main,
+                                        "ОрганизацияКод": "00-000001", "СтрокаДата": current_data, "ПриборыУчета": pribors_list,
+                                        "Аванс": False}
+
+                                response = session.post('http://osbb.tais-dtb.com:8280/OSBB/hs/API/Оплата',
+                                                        headers={'Content-Type': 'application/json; charset=utf-8'}, json=data)
+                                if response.status_code != 200:
+                                    print(response.status_code, response.text)
+                                    data = {"Коментарий": comments, "ОбщСумма": summa_doc,
+                                            "ЛицевойСчетИмя": lic_chet_code_main, "ОрганизацияКод": "00-000001",
+                                            "СтрокаДата": current_data, "ПриборыУчета": pribors_list, "Аванс": True}
+
+                                    response = session.post('http://osbb.tais-dtb.com:8280/OSBB/hs/API/Оплата',
+                                                            headers={'Content-Type': 'application/json; charset=utf-8'},
+                                                            json=data)
+                                    if response.status_code != 200:
+                                        print(response.status_code, response.text)
+                                        Error_list.append({"name": lic_chet_code, "response": response.text})
+                                    else:
+                                        print(f"Начисление успешно добавлено для лицевого счета")
+
                                 else:
-                                    yslyga_code = "000000039"
-
-
-                            elif "Вивіз сміття" in this_spisok["tip_obj"]:
-                                yslyga_code = "000000038"
-
-                            elif "Утримання котельні" in this_spisok["tip_obj"]:
-                                yslyga_code = "000000007"
-
-                            elif "Охрана" in this_spisok["tip_obj"]:
-                                yslyga_code = "000000028"
-                            elif "Перенесення" in this_spisok["tip_obj"]:
-                                yslyga_code = "Р00000002"
-
-
-
-                            try:
-                                single_summa = float(this_spisok["parse_oplata"].replace(" ", "").replace(",", "."))
-                            except Exception as e:
-                                print("!!!!!!! Problem with", this_spisok["parse_oplata"])
-                                print(e)
-                                single_summa = 0
-
-                            pribors_list.append({"КодУслуги": yslyga_code,
-                                                 "Сумма": single_summa
-                                                 })
-
-
-                            summa_doc += single_summa
-
-                        data = {"Коментарий": comments, "ОбщСумма": summa_doc, "ЛицевойСчетИмя": lic_chet_code_main,
-                                "ОрганизацияКод": "00-000001", "СтрокаДата": current_data, "ПриборыУчета": pribors_list,
-                                "Аванс": False}
-
-                        response = session.post('http://osbb.tais-dtb.com:8280/OSBB/hs/API/Оплата',
-                                                headers={'Content-Type': 'application/json; charset=utf-8'}, json=data)
-                        if response.status_code != 200:
-                            print(response.status_code, response.text)
-                            data = {"Коментарий": comments, "ОбщСумма": summa_doc,
-                                    "ЛицевойСчетИмя": lic_chet_code_main, "ОрганизацияКод": "00-000001",
-                                    "СтрокаДата": current_data, "ПриборыУчета": pribors_list, "Аванс": True}
-
-                            response = session.post('http://osbb.tais-dtb.com:8280/OSBB/hs/API/Оплата',
-                                                    headers={'Content-Type': 'application/json; charset=utf-8'},
-                                                    json=data)
-                            if response.status_code != 200:
-                                print(response.status_code, response.text)
-                                Error_list.append({"name": lic_chet_code, "response": response.text})
-                            else:
-                                print(f"Начисление успешно добавлено для лицевого счета")
-
-                        else:
-                            print(f"Начисление успешно добавлено для лицевого счета")
-
-                    else:
-                        print("Нет такого лицевого счета")
-                else:
-                    print("Ошибка такого лицевого счета")
+                                    print(f"Начисление успешно добавлено для лицевого счета")
 
 
 
 
-        except Exception as e:
-            print(e)
-            breakpoint()
-            Error_list.append({"name": name, "response": response})
+
+
+                except Exception as e:
+                    print(e)
+                    breakpoint()
+                    Error_list.append({"name": name, "response": response})
 
     print(Error_list)
 
@@ -1940,5 +2004,5 @@ def main(type):
 
 
 if __name__ == '__main__':
-        main(type='schetchiki_doc')
+        main(type='doplata')
 
