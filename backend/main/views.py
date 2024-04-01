@@ -1164,7 +1164,7 @@ class LogInView(GuestOnlyView, FormView):
             except Exception as e:
                 pass
 
-            return redirect(redirect_to)
+        return redirect(redirect_to)
 
         return redirect(settings.LOGIN_REDIRECT_URL)
 
