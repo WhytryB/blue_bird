@@ -39,6 +39,21 @@ import random
 import locale
 from notifications.signals import notify
 from liqpay import LiqPay
+from django_telegram_login.widgets.constants import (
+    SMALL,
+    MEDIUM,
+    LARGE,
+    DISABLE_USER_PHOTO,
+)
+from django_telegram_login.widgets.generator import (
+    create_callback_login_widget,
+    create_redirect_login_widget,
+)
+
+
+TELEGRAM_BOT_NAME = 'ptahosbb_bot'
+TELEGRAM_BOT_TOKEN = '6714890997:AAGjrMFWkzZLiFD21niZZKVYxNIeSCv4RA8'
+TELEGRAM_LOGIN_REDIRECT_URL = 'https://ptah.osbb.house'
 
 osbb = OSBB()
 locale.setlocale(locale.LC_TIME, 'uk_UA.UTF-8')
@@ -117,7 +132,12 @@ class HomeView(LoginRequiredMixin, TemplateView):
                 sorted_data = {}
                 dates = []
                 for entry in yslygi_response:
-                    number, name = entry["ПриборУчета"].split('/')
+                    temp_entry_list = entry["ПриборУчета"].split('/')
+                    if len(temp_entry_list) > 2:
+                        number = temp_entry_list[0] + '/' + temp_entry_list[1]
+                        name = temp_entry_list[2]
+                    else:
+                        number, name = temp_entry_list
                     key = f"{number}/{name}"
                     # year = datetime.strptime(entry["Период"], "%d.%m.%Y %H:%M:%S").year
                     if key not in sorted_data:
@@ -439,7 +459,12 @@ class CountersView(LoginRequiredMixin, TemplateView):
 
             dates = []
             for entry in yslygi_response:
-                number, name = entry["ПриборУчета"].split('/')
+                temp_entry_list = entry["ПриборУчета"].split('/')
+                if len(temp_entry_list) > 2:
+                    number = temp_entry_list[0] + '/' + temp_entry_list[1]
+                    name = temp_entry_list[2]
+                else:
+                    number, name = temp_entry_list
                 key = f"{number}/{name}"
                 #year = datetime.strptime(entry["Период"], "%d.%m.%Y %H:%M:%S").year
                 if key not in sorted_data:
@@ -479,7 +504,12 @@ class CountersView(LoginRequiredMixin, TemplateView):
                             if period_str == month_key:
                                 if max_date <= period_str:
                                     max_date = period_str
-                                number, name = entry["ПриборУчета"].split('/')
+                                temp_entry_list = entry["ПриборУчета"].split('/')
+                                if len(temp_entry_list) > 2:
+                                    number = temp_entry_list[0] + '/' + temp_entry_list[1]
+                                    name = temp_entry_list[2]
+                                else:
+                                    number, name = temp_entry_list
                                 data_key_temp = data_motn - timedelta(days=data_motn.day)
                                 month_key_temp = f"{data_key_temp.year} {calendar.month_name[data_key_temp.month].capitalize()}"
 
@@ -510,7 +540,12 @@ class CountersView(LoginRequiredMixin, TemplateView):
                     else:
                         print(f"No Pribor {name_key} found.")
                     if not added_data:
-                        number, name = current_pribor_data[0]["ПриборУчета"].split('/')
+                        temp_entry_list = current_pribor_data[0]["ПриборУчета"].split('/')
+                        if len(temp_entry_list) > 2:
+                            number = temp_entry_list[0] + '/' + temp_entry_list[1]
+                            name = temp_entry_list[2]
+                        else:
+                            number, name = temp_entry_list
                         data_key_temp = data_motn - timedelta(days=data_motn.day)
                         month_key_temp = f"{data_key_temp.year} {calendar.month_name[data_key_temp.month].capitalize()}"
                         prev_month_data = formatted_data.get(month_key_temp, [])
@@ -1130,6 +1165,12 @@ class GuestOnlyView(View):
 
 class LogInView(GuestOnlyView, FormView):
     template_name = 'login.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        telegram_login_widget = create_callback_login_widget(TELEGRAM_BOT_NAME, size=MEDIUM)
+        context['telegram_login_widget'] = telegram_login_widget
+        return context
 
     @staticmethod
     def get_form_class(**kwargs):

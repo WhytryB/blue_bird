@@ -20,6 +20,7 @@
 
                 <div class="logo font-weight-bold text-center"><p class="mb-30px text-center">Введіть свій Логін та Пароль</p></div>
                 <div class="auth-form">
+                    {% autoescape off %}{{ telegram_login_widget }}{% endautoescape %}
                     <form method="post">
                         {% csrf_token %}
 
@@ -56,3 +57,9 @@
     <script src="../static/js/plugins/bootstrap.min.js"></script>
 </body>
 </html>
+<script type="text/javascript">
+    function onTelegramAuth(user) {
+        console.log(user)
+        alert('Logged in as ' + user.first_name + ' ' + user.last_name + '!');
+    }
+</script>

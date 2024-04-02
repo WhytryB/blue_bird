@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'notifications',
     'main',
     'corsheaders',
+    'django_telegram_login',
 ]
 
 MIDDLEWARE = [
