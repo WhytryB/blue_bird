@@ -20,7 +20,7 @@
 
                 <div class="logo font-weight-bold text-center"><p class="mb-30px text-center">Введіть свій Логін та Пароль</p></div>
                 <div class="auth-form">
-                    {% autoescape off %}{{ telegram_login_widget }}{% endautoescape %}
+
                     <form method="post">
                         {% csrf_token %}
 
@@ -42,16 +42,19 @@
                         <div class="mb-3">
                             <button type="submit" class="btn btn-primary w-100">Вхід в систему</button>
                         </div>
+
                     </form>
 
+
                     <div class="social-auth mt-30px">
+                    <a href="{% url 'password_reset' %}">Забули пароль?</a>
 
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    
+
     <!--Javascripts-->
     <script src="../static/js/plugins/jquery.min.js"></script>
     <script src="../static/js/plugins/bootstrap.min.js"></script>

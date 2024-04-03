@@ -4,7 +4,7 @@ from django.urls import re_path, include
 from notifications import urls as notifications_urls
 
 from .views import (
-    LogInView, LogOutView, ChangeProfileView, HomeView, CountersView, PaymentView,
+    LogInView, LogOutView, ChangeProfileView, HomeView, CountersView, PaymentView, PasswordResetView, VerifyResetCodeView, ResetPasswordView,
     CarsView, VoteView, ArchiveView, InfoView, DocsView, SupportView, execute_script, SetLichView, mark_notifications_as_read
 #     ChangeEmailView, ChangeProfileView, ChangePasswordView,
 #     RestorePasswordView, RestorePasswordDoneView,
@@ -28,6 +28,10 @@ urlpatterns = [
     path('logout/', LogOutView.as_view(), name='logout'),
     re_path(r'^inbox/notifications/', include(notifications_urls, namespace='notifications')),
     path('mark-as-read/', mark_notifications_as_read, name='mark_as_read'),
+    path('password/reset/', PasswordResetView.as_view(), name='password_reset'),
+    path('verify/reset_code/', VerifyResetCodeView.as_view(), name='verify_reset_code'),
+    path('reset/password/', ResetPasswordView.as_view(), name='reset_password'),
+    
 #     path('restore/password/', RestorePasswordView.as_view(), name='restore_password'),
 #     path('restore/password/done/', RestorePasswordDoneView.as_view(), name='restore_password_done'),
 #     path('change/password/', ChangePasswordView.as_view(), name='change_password'),

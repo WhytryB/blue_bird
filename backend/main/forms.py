@@ -98,3 +98,16 @@ class ChangeProfileForm(forms.Form):
         widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': "Пароль", 'autocomplete': 'off'}),
         required=False,
     )
+
+
+class ChangePasswordPhoneForm(forms.Form):
+    phone = forms.CharField( widget=forms.NumberInput(attrs={'class': 'form-control', 'placeholder': "Номер телефону"}), max_length=14, required=True)
+
+
+class ChangePasswordCodeForm(forms.Form):
+    reset_code = forms.CharField( widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': "Код підтвердження"}), max_length=6, required=True)
+
+
+class ChangePasswordConfirmForm(forms.Form):
+    new_password = forms.CharField( widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': "Новий пароль"}), min_length=5, max_length=25, required=True)
+    confirm_password = forms.CharField( widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': "Підтвердити пароль"}), min_length=5, max_length=25, required=True)

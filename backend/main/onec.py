@@ -2,9 +2,6 @@ import requests
 from requests.auth import HTTPBasicAuth
 import os
 import sys
-import string
-import uuid
-import random
 
 
 current_script_directory = os.path.dirname(os.path.realpath(__file__))
@@ -102,6 +99,12 @@ class OSBB:
         response = self.perform_resopnse_odata(response)
         return response[0]
 
+    @handle_errors
+    def get_user_by_username(self, username):
+        response = self.session.get(f"{BD_HOST}Catalog_ПотребителиУслуг?$format=json&$filter=Логин eq '{username}'",
+                                    headers=self.headers)
+        response = self.perform_resopnse_odata(response)
+        return response[0]
 
     @handle_errors
     def get_user_by_username(self, desc):

@@ -2,7 +2,7 @@ from django.shortcuts import render
 from django.contrib import messages
 from django.contrib.auth import login, authenticate, REDIRECT_FIELD_NAME, update_session_auth_hash
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.contrib.auth.views import LogoutView as BaseLogoutView
+from django.contrib.auth.views import LogoutView as BaseLogoutView, FormView
 from django.views.generic.base import TemplateView
 from django.views.generic import CreateView
 from django.shortcuts import get_object_or_404, redirect
@@ -12,7 +12,7 @@ from django.utils.translation import gettext_lazy as _
 from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.debug import sensitive_post_parameters
-from django.views.generic import View, FormView
+from django.views.generic import View
 from django.conf import settings
 from django.urls import reverse_lazy
 from django.db.models import Count
@@ -27,7 +27,7 @@ import pytz
 
 
 from .forms import (
-    SignInViaUsernameForm, ChangeProfileForm
+    SignInViaUsernameForm, ChangeProfileForm, ChangePasswordPhoneForm, ChangePasswordCodeForm, ChangePasswordConfirmForm
 )
 from .models import Poll, Choice, Vote, SupportTicket
 from django.urls import reverse_lazy
@@ -39,21 +39,9 @@ import random
 import locale
 from notifications.signals import notify
 from liqpay import LiqPay
-from django_telegram_login.widgets.constants import (
-    SMALL,
-    MEDIUM,
-    LARGE,
-    DISABLE_USER_PHOTO,
-)
-from django_telegram_login.widgets.generator import (
-    create_callback_login_widget,
-    create_redirect_login_widget,
-)
+from django.contrib.auth.forms import PasswordResetForm
+from .sms_api import send_sms
 
-
-TELEGRAM_BOT_NAME = 'ptahosbb_bot'
-TELEGRAM_BOT_TOKEN = '6714890997:AAGjrMFWkzZLiFD21niZZKVYxNIeSCv4RA8'
-TELEGRAM_LOGIN_REDIRECT_URL = 'https://ptah.osbb.house'
 
 osbb = OSBB()
 locale.setlocale(locale.LC_TIME, 'uk_UA.UTF-8')
@@ -1162,14 +1150,113 @@ class GuestOnlyView(View):
 
         return super().dispatch(request, *args, **kwargs)
 
+from django.contrib.auth import get_user_model
+class PasswordResetView(GuestOnlyView, FormView):
+    template_name = 'password_reset.html'
+
+    @staticmethod
+    def get_form_class(**kwargs):
+        return ChangePasswordPhoneForm
+
+    def form_invalid(self, form):
+        return self.render_to_response(self.get_context_data(form=form, error='Неправильні дані'))
+
+    def form_valid(self, form):
+
+        phone_number = form.cleaned_data.get('phone')
+        User = get_user_model()
+        response_user = osbb.get_user_by_username(phone_number)
+        if not response_user:
+            return self.render_to_response(self.get_context_data(form=form,
+                                                                 error='Такого користувача не знайдено'))
+        ref_key = response_user.get('Ref_Key')
+        try:
+            user = User.objects.get(ref_key=ref_key)
+        except User.DoesNotExist:
+            return self.render_to_response(self.get_context_data(form=form,
+                                                                 error='Такого користувача не знайдено'))
+
+
+        code = ''.join(random.choices('0123456789', k=6))
+
+        self.request.session['reset_code'] = code
+        self.request.session['reset_user_ref'] = ref_key
+
+
+        message = f'Код: {code}'
+        response_sms = send_sms(phone_number, message)
+        if response_sms:
+            return redirect('verify_reset_code')
+        else:
+            return self.render_to_response(self.get_context_data(form=form,
+                                                                      error="Помилка з смс-сервером"))
+
+
+class VerifyResetCodeView(GuestOnlyView, FormView):
+    template_name = 'verify_reset_code.html'
+
+    @staticmethod
+    def get_form_class(**kwargs):
+        return ChangePasswordCodeForm
+
+    def form_invalid(self, form):
+        return self.render_to_response(self.get_context_data(form=form, error='Неправильні дані'))
+
+    def form_valid(self, form):
+        reset_code = form.cleaned_data['reset_code']
+        stored_code = self.request.session.get('reset_code')
+        if reset_code == stored_code:
+            return redirect('reset_password')
+        else:
+            return self.render_to_response(self.get_context_data(form=form, error='Невірний код підтвердження'))
+
+
+class ResetPasswordView(GuestOnlyView, FormView):
+    template_name = 'reset_password.html'
+
+    @staticmethod
+    def get_form_class(**kwargs):
+        return ChangePasswordConfirmForm
+
+    def form_invalid(self, form):
+        return self.render_to_response(self.get_context_data(form=form, error='Неправильні дані'))
+
+    def form_valid(self, form):
+        new_password = form.cleaned_data['new_password']
+        confirm_password = form.cleaned_data['confirm_password']
+        if new_password == confirm_password:
+            User = get_user_model()
+            reset_user_ref = self.request.session.get('reset_user_ref')
+            # Reset user's password
+            phone_number = self.request.POST['phone_number']
+            try:
+                user = User.objects.get(ref_key=reset_user_ref)
+            except User.DoesNotExist:
+                return self.render_to_response(self.get_context_data(form=form, error='Помилка'))
+
+
+            data = {"Логин": user.username, "Пароль": new_password}
+            response_update_password = osbb.patch_user(reset_user_ref, data)
+            if response_update_password:
+                user.set_password(new_password)
+                user.save()
+                # Optionally log the user in
+                user = authenticate(username=user.username, password=new_password)
+                if user is not None:
+                    login(self.request, user)
+                messages.success(self.request, 'Пароль успешно изменен')
+                return redirect('home')
+            else:
+                return self.render_to_response(self.get_context_data(form=form, error='Помилка'))
+        else:
+            return self.render_to_response(self.get_context_data(form=form, error='Паролі не співпадають'))
+
 
 class LogInView(GuestOnlyView, FormView):
     template_name = 'login.html'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        telegram_login_widget = create_callback_login_widget(TELEGRAM_BOT_NAME, size=MEDIUM)
-        context['telegram_login_widget'] = telegram_login_widget
         return context
 
     @staticmethod
