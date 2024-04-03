@@ -1183,7 +1183,7 @@ class PasswordResetView(GuestOnlyView, FormView):
         self.request.session['reset_user_ref'] = ref_key
 
 
-        message = f'Код: {code}'
+        message = f'Ваш код для сброса пароля: {code}'
         response_sms = send_sms(phone_number, message)
         if response_sms:
             return redirect('verify_reset_code')
