@@ -1232,13 +1232,4 @@ def execute_script(request):
     if not request_id:
         return JsonResponse({"error": "Unauthorized request"}, status=401)
 
-
-    # Виклик зовнішнього скрипта
-    try:
-        response = requests.get('https://example.com/external_script', params={'request_id': request_id})
-        response_data = response.json()
-        success = response_data.get('success', False)
-    except Exception as e:
-        return JsonResponse({"error": str(e)}, status=500)
-
-    return JsonResponse({"success": success}, status=200, safe=False)
+    return JsonResponse({"success": True}, status=200, safe=False)
