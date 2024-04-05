@@ -386,7 +386,7 @@ class HomeView(LoginRequiredMixin, TemplateView):
                 context['raschet'] = result_list
 
 
-                notify.send(self.request.user, recipient=self.request.user, verb=f'Перехід на головну сторінку {self.request.user.username}')
+                # notify.send(self.request.user, recipient=self.request.user, verb=f'Перехід на головну сторінку {self.request.user.username}')
 
 
 
@@ -1298,11 +1298,11 @@ class LogInView(GuestOnlyView, FormView):
         url_is_safe = is_safe_url(redirect_to, allowed_hosts=request.get_host(), require_https=request.is_secure())
 
         if url_is_safe:
-            try:
-                notify.send(self.request.user, recipient=self.request.user,
-                        verb=f'Новий вхід {self.request.user.username}')
-            except Exception as e:
-                pass
+            #try:
+                #notify.send(self.request.user, recipient=self.request.user,
+                #verb=f'Новий вхід {self.request.user.username}')
+            #except Exception as e:
+                #pass
 
             return redirect(redirect_to)
 
