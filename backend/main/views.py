@@ -1155,6 +1155,11 @@ from django.contrib.auth import get_user_model
 class PasswordResetView(GuestOnlyView, FormView):
     template_name = 'password_reset.html'
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['country_codes'] = country_codes
+        return context
+
     @staticmethod
     def get_form_class(**kwargs):
         return ChangePasswordPhoneForm
@@ -1166,7 +1171,9 @@ class PasswordResetView(GuestOnlyView, FormView):
 
         phone_number = form.cleaned_data.get('phone')
         User = get_user_model()
-        response_user = osbb.get_user_by_username(phone_number)
+        code = form.data.get('country_code').replace("+", "")
+        phone = code + phone_number
+        response_user = osbb.get_user_by_username(phone)
         if not response_user:
             return self.render_to_response(self.get_context_data(form=form,
                                                                  error='Такого користувача не знайдено'))
@@ -1185,7 +1192,7 @@ class PasswordResetView(GuestOnlyView, FormView):
 
 
         message = f'Ваш код для сброса пароля: {code}'
-        response_sms = send_sms(phone_number, message)
+        response_sms = send_sms(phone, message)
         if response_sms:
             return redirect('verify_reset_code')
         else:
@@ -1228,8 +1235,6 @@ class ResetPasswordView(GuestOnlyView, FormView):
         if new_password == confirm_password:
             User = get_user_model()
             reset_user_ref = self.request.session.get('reset_user_ref')
-            # Reset user's password
-            phone_number = self.request.POST['phone_number']
             try:
                 user = User.objects.get(ref_key=reset_user_ref)
             except User.DoesNotExist:

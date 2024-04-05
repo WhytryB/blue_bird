@@ -103,7 +103,7 @@ class ChangeProfileForm(forms.Form):
 
 
 class ChangePasswordPhoneForm(forms.Form):
-    phone = forms.CharField( widget=forms.NumberInput(attrs={'class': 'form-control', 'placeholder': "Номер телефону"}), max_length=14, required=True)
+    phone = forms.CharField( widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': "Номер телефону"}), max_length=14, required=True)
 
 
 class ChangePasswordCodeForm(forms.Form):
