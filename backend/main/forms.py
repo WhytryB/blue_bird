@@ -19,7 +19,7 @@ class UserCacheMixin:
 
 
 class SignIn(UserCacheMixin, forms.Form):
-    password = forms.CharField(label=_('Password'), strip=False, widget=forms.PasswordInput(attrs={'class': 'form-control', 'autocomplete': 'on'}))
+    password = forms.CharField(label=_('Password'), strip=False, widget=forms.PasswordInput(attrs={'class': 'form-control', 'autocomplete': 'current-password'}))
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -41,7 +41,7 @@ class SignIn(UserCacheMixin, forms.Form):
 
 class SignInViaUsernameForm(SignIn):
     username = forms.CharField(
-    widget=forms.TextInput(attrs={'class': 'form-control', 'style': 'padding-left: 20px !important;', 'autocomplete': 'on'}),
+    widget=forms.TextInput(attrs={'class': 'form-control', 'style': 'padding-left: 20px !important;', 'autocomplete': 'username'}),
     label=_('Username'))
 
     @property
