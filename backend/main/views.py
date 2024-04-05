@@ -21,6 +21,7 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import requests
 import json
+from .utils import country_codes
 from datetime import datetime, timedelta
 
 import pytz
@@ -29,7 +30,7 @@ import pytz
 from .forms import (
     SignInViaUsernameForm, ChangeProfileForm, ChangePasswordPhoneForm, ChangePasswordCodeForm, ChangePasswordConfirmForm
 )
-from .models import Poll, Choice, Vote, SupportTicket
+from .models import Poll, Choice, Vote, SupportTicket, BackgroundModel
 from django.urls import reverse_lazy
 from .onec import OSBB
 from collections import defaultdict
@@ -1257,6 +1258,12 @@ class LogInView(GuestOnlyView, FormView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        try:
+            background_photo = BackgroundModel.objects.filter(photo_type='login_background').first()
+            context['background_photo_url'] = background_photo.photo.url
+        except Exception as e:
+            pass
+        context['country_codes'] = country_codes
         return context
 
     @staticmethod

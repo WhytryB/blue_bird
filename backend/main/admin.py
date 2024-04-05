@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import CustomUser, Poll, Choice, Vote, PhotoModel, SupportTicket
+from .models import CustomUser, Poll, Choice, Vote, PhotoModel, SupportTicket, BackgroundModel
 
 class CustomUserAdmin(UserAdmin):
     list_display = ('username', 'email', 'first_name', 'last_name', 'is_staff', 'profile_picture')
@@ -32,6 +32,12 @@ class PhotoModelAdmin(admin.ModelAdmin):
     list_display = ["title", "photo"]
     search_fields = ["title"]
     autocomplete_fields = ["poll"]
+
+
+@admin.register(BackgroundModel)
+class BackgroundModelAdmin(admin.ModelAdmin):
+    list_display = ["title", "photo", "photo_type"]
+    search_fields = ["title"]
 
 
 @admin.register(Choice)

@@ -10,6 +10,17 @@
     <link rel="stylesheet" href="../static/css/plugins/bootstrap.min.css">
     <link rel="stylesheet" href="../static/css/plugins/fontawesome.min.css">
     <link rel="stylesheet" href="../static/css/style.css">
+     <style>
+        body {
+            /* Устанавливаем фоновое изображение */
+            background-image: url('{{ background_photo_url }}');
+            /* Устанавливаем стиль фона */
+            background-size: cover;
+            background-position: top;
+            /* Остальные стили */
+            /* ... */
+        }
+    </style>
 
 </head>
 <body>
@@ -25,9 +36,26 @@
                         {% csrf_token %}
 
                         <div class="mb-3 position-relative">
+
                             <label for="{{ form.username.id_for_label }}" class="w-100">Логін:</label>
-                            <span class="icon"><i class="fa-regular fa-user"></i></span>
-                            {{ form.username }}
+
+                            <span class="icon"><i class="fa fa-phone" aria-hidden="true"></i></span>
+                            <div class="row">
+                                <div class="col-4">
+                                    <select style="padding-left: 39px !important;" class="form-select" id="country_code" name="country_code">
+                                        {% for i in country_codes %}
+                                         <option value="{{ i.code }}" {% if i.name == 'UA' %}selected{% endif %}>{{ i.code }}</option>
+                                        {% endfor %}
+                                    </select>
+
+                                </div>
+                                <div class="col-8">
+
+                                     {{ form.username }}
+                                </div>
+                            </div>
+
+
                         </div>
                         <div class="mb-2 position-relative">
                             <label for="{{ form.password.id_for_label }}" class="w-100">Пароль:</label>
@@ -60,9 +88,3 @@
     <script src="../static/js/plugins/bootstrap.min.js"></script>
 </body>
 </html>
-<script type="text/javascript">
-    function onTelegramAuth(user) {
-        console.log(user)
-        alert('Logged in as ' + user.first_name + ' ' + user.last_name + '!');
-    }
-</script>

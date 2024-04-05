@@ -73,6 +73,15 @@ class PhotoModel(models.Model):
     photo = models.ImageField(upload_to='poll_photos/')
 
 
+class BackgroundModel(models.Model):
+    title = models.CharField(max_length=255)
+    photo = models.ImageField(upload_to='background_photos/')
+    photo_type = models.CharField(max_length=100, default='login_background')
+
+    def __str__(self):
+        return self.title
+
+
 class Choice(models.Model):
     poll = models.ForeignKey(Poll, on_delete=models.CASCADE)
     choice_text = models.CharField(max_length=255)

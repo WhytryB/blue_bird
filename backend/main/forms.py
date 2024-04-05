@@ -19,7 +19,7 @@ class UserCacheMixin:
 
 
 class SignIn(UserCacheMixin, forms.Form):
-    password = forms.CharField(label=_('Password'), strip=False, widget=forms.PasswordInput(attrs={'class': 'form-control'}))
+    password = forms.CharField(label=_('Password'), strip=False, widget=forms.PasswordInput(attrs={'class': 'form-control', 'autocomplete': 'on'}))
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -41,7 +41,7 @@ class SignIn(UserCacheMixin, forms.Form):
 
 class SignInViaUsernameForm(SignIn):
     username = forms.CharField(
-    widget=forms.TextInput(attrs={'class': 'form-control'}),
+    widget=forms.TextInput(attrs={'class': 'form-control', 'style': 'padding-left: 20px !important;', 'autocomplete': 'on'}),
     label=_('Username'))
 
     @property
@@ -50,7 +50,9 @@ class SignInViaUsernameForm(SignIn):
 
     def clean_username(self):
         username = self.cleaned_data['username']
-        user = User.objects.filter(username=username).first()
+        code = self.data.get('country_code').replace("+", "")
+        phone = code + username
+        user = User.objects.filter(username=phone).first()
         if not user:
             raise ValidationError(_('You entered an invalid username.'))
 
@@ -59,7 +61,7 @@ class SignInViaUsernameForm(SignIn):
 
         self.user_cache = user
 
-        return username
+        return phone
 
 
 class ChangeProfileForm(forms.Form):
