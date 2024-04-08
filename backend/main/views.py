@@ -292,12 +292,15 @@ class HomeView(LoginRequiredMixin, TemplateView):
 
             raschet_response = osbb.get_raschet_user(context['lich_selected'])
             if raschet_response:
+                dolg = raschet_response['Долг']
+                raschet = raschet_response['Расчёт']
 
 
-                result = defaultdict(lambda: {"month_oplata":month_oplata, "month_nachislenie": month_nachislenie, "services": defaultdict(lambda: {"единица": "", "тариф":"", "оплата": 0, "нарах": 0, "quantity_narah": 0, "name": ""}), "month_name": "", "second_month_name": ""})
+                result = defaultdict(lambda: {"month_oplata":month_oplata,"month_dolg": month_dolg, "month_nachislenie": month_nachislenie, "services": defaultdict(lambda: {"единица": "", "тариф":"", "оплата": 0, "нарах": 0, "quantity_narah": 0, "name": "", "долг": 0}), "month_name": "", "second_month_name": ""})
 
-                for entry in raschet_response:
+                for entry in raschet:
                     month_oplata = 0.0
+                    month_dolg = 0.0
                     month_nachislenie = 0.0
                     date_str = entry["Период"].split()[0]
                     date = datetime.strptime(date_str, "%d.%m.%Y")
@@ -352,15 +355,17 @@ class HomeView(LoginRequiredMixin, TemplateView):
 
                     if "Надходження" in entry["Регистратор"]:
                         oplata = round(float(re.sub(r'[^\d.,]', '', entry["Сумма"]).replace(',', '.')), 2)
-                        result[month_key]["services"][service_name]["оплата"] += oplata
-                        result[month_key]["month_oplata"] += oplata
+
+                        result[month_key]["services"][service_name]["оплата"] = round(float(result[month_key]["services"][service_name]["оплата"]) + float(oplata), 2)
+
+                        result[month_key]["month_oplata"] += round(oplata, 2)
                         result[month_key]["month_oplata"] = round(result[month_key]["month_oplata"], 2)
 
 
                     elif "Нарахування" in entry["Регистратор"]:
                         oplata = round(float(re.sub(r'[^\d.,]', '', entry["Сумма"]).replace(',', '.')), 2)
                         result[month_key]["services"][service_name]["нарах"] += oplata
-                        result[month_key]["month_nachislenie"] += oplata
+                        result[month_key]["month_nachislenie"] += round(oplata, 2)
                         result[month_key]["month_nachislenie"] = round(result[month_key]["month_nachislenie"], 2)
                         if int(re.sub(r'\D', '', entry["Количество"])) != 0:
                             colich =  float(re.sub(r'[^\d.,]', '',  entry["Количество"]).replace(',', '.'))
@@ -374,6 +379,27 @@ class HomeView(LoginRequiredMixin, TemplateView):
                     result[month_key]["services"][service_name]["name"] = service_name
                     result[month_key]["month_name"] = month_name
                     result[month_key]["second_month_name"] = second_month_name
+
+
+
+                for dolg_data in dolg:
+                    date_str = dolg_data["МесяцНачисления"].split()[0]
+                    date = datetime.strptime(date_str, "%d.%m.%Y")
+                    month_key = date.strftime("%Y-%m")
+                    month_name = f"{date.year} {calendar.month_name[date.month].capitalize()}"
+                    service_name = dolg_data["Услуга"]
+                    oplata = round(float(re.sub(r'[^\d.,]', '', dolg_data["СуммаОстаток"]).replace(',', '.')), 2)
+                    print(service_name)
+                    if month_key == '2023-06':
+                        print("d")
+                    print(month_key)
+                    print(result[month_key]["services"][service_name]["долг"])
+                    print(float(result[month_key]["services"][service_name]["долг"]), oplata)
+                    result[month_key]["services"][service_name]["долг"] = round(float(result[month_key]["services"][service_name]["долг"]) + float(oplata), 2)
+
+                    result[month_key]["month_dolg"] += round(oplata, 2)
+                    result[month_key]["month_dolg"] = round(result[month_key]["month_dolg"], 2)
+
 
                 for month_data in result.values():
                     month_data["services"] = list(month_data["services"].values())
