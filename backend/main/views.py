@@ -1,5 +1,7 @@
 from django.shortcuts import render
 from django.contrib import messages
+import jinja2
+import pdfkit
 from django.contrib.auth import login, authenticate, REDIRECT_FIELD_NAME, update_session_auth_hash
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.views import LogoutView as BaseLogoutView, FormView
@@ -115,180 +117,7 @@ class HomeView(LoginRequiredMixin, TemplateView):
                 # Форматируем дату и время в нужный формат
                 formatted_datetime = current_datetime_ukraine.strftime("%Y-%m-%d %H:%M")
                 context['formatted_datetime'] = formatted_datetime
-            yslygi_response = osbb.get_priboru_user(context['lich_selected'])
-            pribory_response_list = osbb.get_unique_priboru_user(context['lich_selected'])
-            if yslygi_response:
-                sorted_data = {}
-                dates = []
-                for entry in yslygi_response:
-                    temp_entry_list = entry["ПриборУчета"].split('/')
-                    if len(temp_entry_list) > 2:
-                        number = temp_entry_list[0] + '/' + temp_entry_list[1]
-                        name = temp_entry_list[2]
-                    else:
-                        number, name = temp_entry_list
-                    key = f"{number}/{name}"
-                    # year = datetime.strptime(entry["Период"], "%d.%m.%Y %H:%M:%S").year
-                    if key not in sorted_data:
-                        sorted_data[key] = []
-                    sorted_data[key].append(entry)
-                    dates.append(datetime.strptime(entry["Период"], "%d.%m.%Y %H:%M:%S"))
 
-
-                # Нахождение самой маленькой даты
-                min_date = min(dates)
-
-                date_range = []
-                current_date = min_date
-                while current_date <= datetime.now():
-                    date_range.append(current_date.replace(day=1))
-                    if current_date.month == 12:
-                        current_date = current_date.replace(year=current_date.year + 1, month=1)
-                    else:
-                        current_date = current_date.replace(month=current_date.month + 1)
-
-                formatted_data_2023 = {}
-                formatted_data_2024 = {}
-                colors = [
-                    {'backgroundColor': 'rgba(255, 99, 132, 0.2)', 'borderColor': 'rgba(255, 99, 132, 1)'},
-                    {'backgroundColor': 'rgba(54, 162, 235, 0.2)', 'borderColor': 'rgba(54, 162, 235, 1)'},
-                    {'backgroundColor': 'rgba(255, 206, 86, 0.2)', 'borderColor': 'rgba(255, 206, 86, 1)'},
-                    {'backgroundColor': 'rgba(75, 192, 192, 0.2)', 'borderColor': 'rgba(75, 192, 192, 1)'},
-                    {'backgroundColor': 'rgba(153, 102, 255, 0.2)', 'borderColor': 'rgba(153, 102, 255, 1)'},
-                    {'backgroundColor': 'rgba(255, 159, 64, 0.2)', 'borderColor': 'rgba(255, 159, 64, 1)'},
-                    {'backgroundColor': 'rgba(255, 0, 0, 0.2)', 'borderColor': 'rgba(255, 0, 0, 1)'},
-                    {'backgroundColor': 'rgba(0, 255, 0, 0.2)', 'borderColor': 'rgba(0, 255, 0, 1)'},
-                    {'backgroundColor': 'rgba(0, 0, 255, 0.2)', 'borderColor': 'rgba(0, 0, 255, 1)'},
-                    {'backgroundColor': 'rgba(255, 255, 0, 0.2)', 'borderColor': 'rgba(255, 255, 0, 1)'},
-                    {'backgroundColor': 'rgba(255, 0, 255, 0.2)', 'borderColor': 'rgba(255, 0, 255, 1)'},
-                    {'backgroundColor': 'rgba(0, 255, 255, 0.2)', 'borderColor': 'rgba(0, 255, 255, 1)'},
-                    {'backgroundColor': 'rgba(128, 128, 128, 0.2)', 'borderColor': 'rgba(128, 128, 128, 1)'},
-                    {'backgroundColor': 'rgba(0, 0, 0, 0.2)', 'borderColor': 'rgba(0, 0, 0, 1)'}
-                ]
-
-                for priboru_key in pribory_response_list:
-                    removed_color = colors.pop(0)
-                    for data_motn in date_range:
-
-                        name_key = priboru_key['ПриборУчета']
-                        month_key = f"{data_motn.month}.{data_motn.year}"
-                        current_pribor_data = sorted_data.get(name_key)
-                        if current_pribor_data:
-
-                            max_date = ""
-                            added_data = None
-                            for entry in current_pribor_data:
-                                period = parse_date(entry["Период"])
-                                period = f"{period.month}.{period.year}"
-
-                                if period == month_key:
-                                    if max_date <= period:
-                                        max_date = period
-                                    added_data = float(entry["ПоказаниеПредыдущее"].encode('latin1').decode('unicode-escape').replace(" ", "").replace("\xa0", "").replace(',', '.'))
-
-
-                        else:
-                            print(f"No Pribor {name_key} found.")
-                        if not added_data:
-                            added_data = 0
-                        if data_motn.year == 2023:
-                            if name_key not in formatted_data_2023:
-
-
-                                group_data = {
-                                    "label": f"{current_pribor_data[0]['ПриборУчета']}",
-                                    "data": [],
-                                    "borderWidth": 1,
-                                    "hoverOffset": 4,
-                                    "number": key.split('/')[0],
-                                    "name": key.split('/')[1],
-                                    "year": data_motn.year
-                                }
-                                group_data.update(removed_color)
-                                formatted_data_2023.update({name_key: group_data})
-                            formatted_data_2023[name_key]['data'].append(added_data)
-                        elif data_motn.year == 2024:
-                            if name_key not in formatted_data_2024:
-
-
-                                group_data = {
-                                    "label": f"{current_pribor_data[0]['ПриборУчета']}",
-                                    "data": [],
-
-                                    "hoverOffset": 4,
-                                    "borderWidth": 1,
-
-                                    "year": data_motn.year
-                                }
-                                group_data.update(removed_color)
-                                formatted_data_2024.update({name_key: group_data})
-                            formatted_data_2024[name_key]['data'].append(added_data)
-
-                ukrainian_months = [
-                    'Січ',
-                    'Лют',
-                    'Бер',
-                    'Кві',
-                    'Тра',
-                    'Чер',
-                    'Лип',
-                    'Сер',
-                    'Вер',
-                    'Жов',
-                    'Лис',
-                    'Гру'
-                ]
-
-                # Получение месяцев для 2023 года
-                result_months_2023 = [ukrainian_months[date.month - 1] for date in date_range if date.year == 2023]
-
-                # Получение месяцев для 2024 года
-                result_months_2024 = [ukrainian_months[date.month - 1] for date in date_range if date.year == 2024]
-
-                temp_form_2023 = [{**values} for key, values in formatted_data_2023.items()]
-                temp_form_2024 = [{**values} for key, values in formatted_data_2024.items()]
-                context['yslygi_2023'] = [{**values} for key, values in formatted_data_2023.items()]
-                context['yslygi_2024'] = [{**values} for key, values in formatted_data_2024.items()]
-
-                for pribor_chart in temp_form_2023:
-                    values = pribor_chart['data']
-
-                    diff = [max(0, round(values[i + 1] - values[i], 2)) for i in range(len(values) - 1)]
-                    # Добавляем первый элемент списка данных, так как для него разницу не вычисляем
-                    diff.insert(0, 0)
-
-                    # Заменяем исходные данные на новые вычисленные разницы
-                    pribor_chart['data'] = diff
-
-                for pribor_chart in temp_form_2024:
-                    values = pribor_chart['data']
-
-                    diff = [max(0, round(values[i + 1] - values[i], 2)) for i in range(len(values) - 1)]
-                    # Добавляем первый элемент списка данных, так как для него разницу не вычисляем
-                    diff.insert(0, 0)
-                    last_value_2023 = pribor_chart['data'][0]
-                    last_value_2024 = pribor_chart['data'][0]
-                    for i in  context['yslygi_2023']:
-                        if i['label'] == pribor_chart['label']:
-                            last_value_2023 = i['data'][-1]
-
-                    temp_first_value_2024 = round(last_value_2024 - last_value_2023, 2)
-                    if temp_first_value_2024 < 0:
-                        temp_first_value_2024 = 0
-                    diff[0] = temp_first_value_2024
-
-
-                    # Заменяем исходные данные на новые вычисленные разницы
-                    pribor_chart['data'] = diff
-
-                context['yslygi_2023_chart'] = temp_form_2023
-                context['yslygi_2024_chart'] = temp_form_2024
-
-
-
-
-                context['available_months_list_2023'] = result_months_2023
-                context['available_months_list_2024'] = result_months_2024
 
             raschet_response = osbb.get_raschet_user(context['lich_selected'])
             if raschet_response:
@@ -414,6 +243,193 @@ class HomeView(LoginRequiredMixin, TemplateView):
 
                 # notify.send(self.request.user, recipient=self.request.user, verb=f'Перехід на головну сторінку {self.request.user.username}')
 
+                sorted_data = {}
+                dates = []
+
+                formatted_data_2023 = [
+                               {
+                                  "label":"Електроенергія",
+                                  "data":[],
+                                  "borderWidth":1,
+                                  "hoverOffset":4,
+
+                                  "name":"Електроенергія",
+                                  "year":2023,
+                                  "backgroundColor":"rgba(255, 206, 86, 0.2)",
+                                  "borderColor":"rgba(255, 206, 86, 1)"
+                               },
+                               {
+                                  "label":"Холодна вода",
+                                  "data":[],
+                                  "borderWidth":1,
+                                  "hoverOffset":4,
+                                  "name":"Холодна вода",
+                                  "year":2023,
+                                  "backgroundColor":"rgba(153, 102, 255, 0.2)",
+                                  "borderColor":"rgba(153, 102, 255, 1)"
+                               },
+                               {
+                                  "label":"Опалення",
+                                  "data":[],
+                                  "borderWidth":1,
+                                  "hoverOffset":4,
+                                  "name":"Опалення",
+                                  "year":2023,
+                                  "backgroundColor":"rgba(255, 99, 132, 0.2)",
+                                  "borderColor":"rgba(255, 99, 132, 1)"
+                               },
+                                {
+                                    "label": "Інше",
+                                    "data": [],
+                                    "borderWidth": 1,
+                                    "hoverOffset": 4,
+                                    "name": "Інше",
+                                    "year": 2023,
+                                    "backgroundColor": 'rgba(75, 192, 192, 0.2)',
+                                    "borderColor": 'rgba(75, 192, 192, 1)'
+                                },
+                            ]
+                formatted_data_2024 = [
+                               {
+                                  "label":"Електроенергія",
+                                  "data":[],
+                                  "borderWidth":1,
+                                  "hoverOffset":4,
+
+                                  "name":"Електроенергія",
+                                  "year":2024,
+                                  "backgroundColor":"rgba(255, 206, 86, 0.2)",
+                                  "borderColor":"rgba(255, 206, 86, 1)"
+                               },
+                               {
+                                  "label":"Холодна вода",
+                                  "data":[],
+                                  "borderWidth":1,
+                                  "hoverOffset":4,
+                                  "name":"Холодна вода",
+                                  "year":2024,
+                                  "backgroundColor":"rgba(153, 102, 255, 0.2)",
+                                  "borderColor":"rgba(153, 102, 255, 1)"
+                               },
+                               {
+                                  "label":"Опалення",
+                                  "data":[],
+                                  "borderWidth":1,
+                                  "hoverOffset":4,
+                                  "name":"Опалення",
+                                  "year":2024,
+                                  "backgroundColor":"rgba(255, 99, 132, 0.2)",
+                                  "borderColor":"rgba(255, 99, 132, 1)"
+                               },
+                                {
+                                    "label": "Інше",
+                                    "data": [],
+                                    "borderWidth": 1,
+                                    "hoverOffset": 4,
+                                    "name": "Інше",
+                                    "year": 2024,
+                                    "backgroundColor": 'rgba(75, 192, 192, 0.2)',
+                                    "borderColor": 'rgba(75, 192, 192, 1)'
+                                },
+                            ]
+                colors = [
+                    {'backgroundColor': 'rgba(255, 99, 132, 0.2)', 'borderColor': 'rgba(255, 99, 132, 1)'},
+                    {'backgroundColor': 'rgba(54, 162, 235, 0.2)', 'borderColor': 'rgba(54, 162, 235, 1)'},
+                    {'backgroundColor': 'rgba(255, 206, 86, 0.2)', 'borderColor': 'rgba(255, 206, 86, 1)'},
+                    {'backgroundColor': 'rgba(75, 192, 192, 0.2)', 'borderColor': 'rgba(75, 192, 192, 1)'},
+                    {'backgroundColor': 'rgba(153, 102, 255, 0.2)', 'borderColor': 'rgba(153, 102, 255, 1)'},
+                    {'backgroundColor': 'rgba(255, 159, 64, 0.2)', 'borderColor': 'rgba(255, 159, 64, 1)'},
+                    {'backgroundColor': 'rgba(255, 0, 0, 0.2)', 'borderColor': 'rgba(255, 0, 0, 1)'},
+                    {'backgroundColor': 'rgba(0, 255, 0, 0.2)', 'borderColor': 'rgba(0, 255, 0, 1)'},
+                    {'backgroundColor': 'rgba(0, 0, 255, 0.2)', 'borderColor': 'rgba(0, 0, 255, 1)'},
+                    {'backgroundColor': 'rgba(255, 255, 0, 0.2)', 'borderColor': 'rgba(255, 255, 0, 1)'},
+                    {'backgroundColor': 'rgba(255, 0, 255, 0.2)', 'borderColor': 'rgba(255, 0, 255, 1)'},
+                    {'backgroundColor': 'rgba(0, 255, 255, 0.2)', 'borderColor': 'rgba(0, 255, 255, 1)'},
+                    {'backgroundColor': 'rgba(128, 128, 128, 0.2)', 'borderColor': 'rgba(128, 128, 128, 1)'},
+                    {'backgroundColor': 'rgba(0, 0, 0, 0.2)', 'borderColor': 'rgba(0, 0, 0, 1)'}
+                ]
+                # Получение месяцев для 2023 года
+                result_months_2023 = []
+
+                # Получение месяцев для 2024 года
+                result_months_2024 = []
+
+                for entry in result_list:
+                    try:
+
+                        month=entry['month']
+                        if month != '2023-06' and month != '1-01':
+                            total_for_month = entry['month_nachislenie']
+                            is_water, is_otop, is_svet = False, False, False
+
+                            total_exist_for_month = 0
+                            for service in entry['services']:
+                                service_name = service['name']
+                                service_money = service['нарах']
+
+                                if "Холодне" in service_name:
+                                    is_water = True
+                                    label_name = "Холодна вода"
+                                    pos = 1
+                                elif "Електроенергія" in service_name:
+                                    is_svet = True
+                                    label_name = "Електроенергія"
+                                    pos = 0
+                                elif "Опалення" in service_name:
+                                    is_otop = True
+                                    label_name = "Опалення"
+                                    pos = 2
+                                else:
+                                    label_name = "Інше"
+                                    pos = 3
+
+                                if pos < 3:
+                                    total_exist_for_month += service_money
+                                    if '2024' in month:
+                                        formatted_data_2024[pos]['data'].append(service_money)
+                                    elif '2023' in month:
+                                        formatted_data_2023[pos]['data'].append(service_money)
+
+
+
+                            money_give = total_for_month - total_exist_for_month
+                            date_obj = datetime.strptime(month, "%Y-%m")
+                            month_name = date_obj.strftime("%B")
+                            month_ukr_name = month_name[:3]
+                            if '2024' in month:
+                                if not is_water:
+                                    formatted_data_2024[1]['data'].append(0)
+                                if not is_svet:
+                                    formatted_data_2024[0]['data'].append(0)
+                                if not is_otop:
+                                    formatted_data_2024[2]['data'].append(0)
+                                formatted_data_2024[3]['data'].append(money_give)
+                                result_months_2024.append(month_ukr_name)
+                            elif '2023' in month:
+                                if not is_water:
+                                    formatted_data_2023[1]['data'].append(0)
+                                if not is_svet:
+                                    formatted_data_2023[0]['data'].append(0)
+                                if not is_otop:
+                                    formatted_data_2023[2]['data'].append(0)
+                                formatted_data_2023[3]['data'].append(money_give)
+                                result_months_2023.append(month_ukr_name)
+                    except Exception as e:
+                        pass
+
+
+
+
+
+
+
+
+
+                context['yslygi_2023_chart'] = formatted_data_2023
+                context['yslygi_2024_chart'] = formatted_data_2024
+
+                context['available_months_list_2023'] = result_months_2023
+                context['available_months_list_2024'] = result_months_2024
 
 
 
@@ -427,6 +443,143 @@ class HomeView(LoginRequiredMixin, TemplateView):
             context['raschet'] = [result]
         context['lich'] = result_list_kv
         return context
+
+    def post(self, request, *args, **kwargs):
+
+        data = request.POST.get('data')
+        if data:
+
+            def number_to_words_uk(n, cents=False):
+                """
+                Функция преобразует число в текст на украинском языке.
+                """
+                units = ['', 'один', 'два', 'три', 'чотири', "п'ять", 'шість', 'сім', 'вісім', 'дев`ять']
+                units22 = ['', 'одна', 'дві', 'три', 'чотири', "п'ять", 'шість', 'сім', 'вісім', 'дев`ять']
+                teens = ['', 'одинадцять', 'дванадцять', 'тринадцять', 'чотирнадцять', "п'ятнадцять", 'шістнадцять',
+                         'сімнадцять',
+                         'вісімнадцять', 'дев`ятнадцять']
+                tens = ['', '', 'двадцять', 'тридцять', 'сорок', "п'ятдесят", 'шістдесят', 'сімдесят', 'вісімдесят',
+                        'дев`яносто']
+                hundreds = ['', 'сто', 'двісті', 'триста', 'чотириста', "п'ятьсот", 'шістьсот', 'сімсот', 'вісімсот',
+                            'дев`ятьсот']
+                thousands = ['', 'тисяча', 'тисячі', 'тисячі', 'тисячі', 'тисяч', 'тисяч', 'тисяч', 'тисяч', 'тисяч']
+                grivnas = ['гривня', 'гривні', 'гривень']
+                copick = ['коп.']
+
+                words = []
+
+                if n == 0:
+                    words.append('нуль')
+                else:
+                    num_str = str(n)
+                    num_len = len(num_str)
+                    padding = 6 - num_len
+                    num_str = '0' * padding + num_str  # Дополняем нулями до 6 символов
+
+                    thousands_3 = int(num_str[0])  # Тысячи сотни
+                    thousands_2 = int(num_str[1])  # Тысячи сотни
+                    thousands_1 = int(num_str[2])  # Тысячи десятки
+                    hundreds_1 = int(num_str[3])  # Сотни
+                    tens_1 = int(num_str[4])  ## Десятки
+                    units_1 = int(num_str[5])  # Единицы
+
+                    if cents:
+                        if n > 0:
+                            cents_1 = int(num_str[3:6])
+                            if tens_1 == 1:
+                                words.append(teens[units_1])
+                            else:
+
+                                words.append(tens[tens_1])
+                                words.append(units[units_1])
+                            words.append(copick[0])
+
+
+                    else:
+
+                        if thousands_1 > 0 or thousands_2 > 0 or thousands_3 > 0 or tens_1 > 0 or units_1 > 0:
+                            if thousands_2 > 0:
+                                words.append(tens[thousands_2])
+                                words.append(units22[thousands_1])
+                                words.append(thousands[thousands_2])
+                            elif thousands_1 > 0:
+                                words.append(units22[thousands_1])
+                                words.append(thousands[thousands_1])
+                            else:
+                                words.append(thousands[0])
+
+                            words.append(hundreds[hundreds_1])
+
+                            if tens_1 == 1:
+                                words.append(teens[units_1])
+                            else:
+                                words.append(tens[tens_1])
+                                words.append(units22[units_1])
+
+                            if units_1 == 1:
+                                words.append(grivnas[0])
+                            elif units_1 == 2:
+                                words.append(grivnas[1])
+                            else:
+                                words.append(grivnas[2])
+
+                return ' '.join(words)
+
+            # Load the template
+
+            from jinja2 import Environment, PackageLoader, select_autoescape
+            env = jinja2.Environment(loader=PackageLoader("main"))
+
+            template = env.get_template('tableTemplate.html')
+            # pass df, title, message to the template.
+            pdf_raw_data = json.loads(data)
+
+            lich = self.request.session.get('lich')
+            lich_selected_name = self.request.session.get('lich_name')
+
+            raschet = [pdf_raw_data]
+            user_info = self.request.user
+            kv_name = f"{user_info.last_name} {user_info.first_name} {user_info.middle_name}"
+
+            kv_ulica = f"провулок Обсерваторний, будинок 2/6, {lich_selected_name}"
+            kv_nomer = lich
+            kv_data_m = pdf_raw_data['month']
+            kv_summa = pdf_raw_data['month_nachislenie']
+            amount =  pdf_raw_data['month_nachislenie']
+            amount_list = str(amount).split('.')
+            if len(amount_list) > 1:
+                amount_int = int(amount_list[0])
+                amount_cents = int(amount_list[1])
+            else:
+                amount_int = int(amount_list[0])
+                amount_cents = 0
+
+            amount_in_words = number_to_words_uk(amount_int)
+            if amount_cents > 0:
+                amount_in_words += ", " + number_to_words_uk(amount_cents, True)
+
+            kv_summa_letters = amount_in_words
+
+            kv_data = {"kv_name": kv_name, "kv_ulica": kv_ulica, "kv_nomer": kv_nomer, "kv_data": kv_data_m,
+                       "kv_summa": kv_summa, "amount_in_words": amount_in_words}
+
+            html_out = template.render(raschet=raschet,
+                                       kv_data=kv_data)
+            options = {
+                "enable-local-file-access": None
+            }
+
+            # write the html to file
+            with open(f"main/media/temp/Рахунок_{kv_nomer}_{kv_data_m}.html", 'wb') as file_:
+                file_.write(html_out.encode("utf-8"))
+
+            # write the pdf to file
+            pdfkit.from_string(html_out, output_path=f"main/media/temp/Рахунок_{kv_nomer}_{kv_data_m}.pdf", css=["main/template.css"], options=options)
+
+            document_path = f"media/temp/Рахунок_{kv_nomer}_{kv_data_m}.pdf"
+
+            # Отправить HTTP-ответ с ссылкой на скачивание файла
+            return JsonResponse({'file_url': document_path})
 
 
 class CountersView(LoginRequiredMixin, TemplateView):
@@ -569,12 +722,19 @@ class CountersView(LoginRequiredMixin, TemplateView):
                         for i in prev_month_data:
                             if i["ПриборУчета"] == current_pribor_data[0]["ПриборУчета"]:
                                 pokaz_prev = i["Pokaz"]
-                        month_temp = data_motn.strftime('%Y-%02m') + "-01"
+
+
+                        current_month = datetime.now().month
+
+                        if current_month == data_motn.month:
+                            month_temp = datetime.now().strftime('%Y-%m-%d')
+                        else:
+                            month_temp = data_motn.strftime('%Y-%02m') + "-01"
                         data = {
                             "Month":  month_temp,
                             "Name": name,
                             "Number": number,
-                            "Pokaz": 0,
+                            "Pokaz": pokaz_prev,
                             "Pokaz_prev": pokaz_prev,
                             "Month_name": month_name,
                             "ПриборУчета": current_pribor_data[0]["ПриборУчета"],

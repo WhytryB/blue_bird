@@ -6,3 +6,6 @@ python-dotenv
 django-notifications-hq
 liqpay-sdk-python3
 django-cors-headers
+pdfkit
+Jinja2
+emails

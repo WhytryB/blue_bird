@@ -64,7 +64,7 @@
 
                             <div class="card p-20px mb-25px">
 
-                                <div class="card-title text-uppercase font-weight-bold font-15px">Рахунок</div>
+                                <div class="card-title text-uppercase font-weight-bold font-15px">Рахунок    <a style="float: right !important;" class=" print_schet btn btn-sm btn-outline-primary">друк рахунку</a></div>
                                 <div >
                                     <ul class="tab-navigation inline pill ui-tabs-panel">
                                         <li><a class="font-weight-bold">Оберіть дату </a></li>
@@ -80,6 +80,7 @@
 
                                         </li>
                                     </ul>
+                                <div id="messages-table" class=""></div>
                                 {% for item in raschet %}
                                 <div id={{item.month}} class="ui-tabs-panel dynamic-table" style="display: none;">
                                     <div class="table-responsive">
@@ -144,16 +145,13 @@
 
                                     <ul style=" overflow-x: auto; white-space: nowrap; " class="tab-navigation inline pill">
                                         <li><a href="#tabs1">2024 Разрахунок</a></li>
-                                        <li><a href="#tabs3">2024 Показники</a></li>
                                         <li><a href="#tabs2">2023 Разрахунок</a></li>
-                                        <li><a href="#tabs4">2023 Показники</a></li>
 
                                     </ul>
                                     <div style="    width: 100%; height: 400px; /* Задайте желаемую высоту */">
                                         <canvas id="tabs1" class="pt-20px"></canvas>
                                         <canvas id="tabs2" class="pt-20px"></canvas>
-                                        <canvas id="tabs3" class="pt-20px"></canvas>
-                                        <canvas id="tabs4" class="pt-20px"></canvas>
+
                                     </div>
 
                                 </div>
@@ -256,6 +254,9 @@
 {% endblock %}
 {% block scripts %}
 {% csrf_token %}
+<!--    <script src="-->
+<!--https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js-->
+<!--"></script>-->
 
     <script src="../static/js/plugins/chart.min.js"></script>
     <script src="../static/js/plugins/select2.min.js"></script>
@@ -378,6 +379,12 @@
                                 mode: 'x', // Разрешить горизонтальное прокручивание
                             },
                             zoom: {
+                                wheel: {
+                                    enabled: true,
+                                  },
+                                pinch: {
+                                    enabled: true
+                                  },
                                 enabled: true,
                                 mode: 'x', // Разрешить горизонтальное масштабирование
                             }
@@ -386,32 +393,7 @@
                 },
             });
 
-            new Chart(document.getElementById('tabs3'), {
-                type: 'bar',
-                data: {
-                    labels: {{available_months_list_2024|safe}},
-                    datasets: {{yslygi_2024|safe}}
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'bottom',
-                        },
-                        zoom: {
-                            pan: {
-                                enabled: true,
-                                mode: 'x', // Разрешить горизонтальное прокручивание
-                            },
-                            zoom: {
-                                enabled: true,
-                                mode: 'x', // Разрешить горизонтальное масштабирование
-                            }
-                        }
-                    }
-                },
-            });
+
 
             new Chart(document.getElementById('tabs2'), {
                 type: 'bar',
@@ -470,54 +452,63 @@
                 },
             });
 
-            new Chart(document.getElementById('tabs4'), {
-                type: 'bar',
-                data: {
-                    labels: {{available_months_list_2023|safe}},
-                    datasets: {{yslygi_2023|safe}}
-                    // datasets: [
-                    //     {
-                    //         label: 'Електроенергія ',
-                    //         data: [420, 150, 320, 50, 250, 120, 170, 164, 145, 135, 110, 185],
-                    //         backgroundColor: [
-                    //             '#dcc424',
-                    //         ],
-                    //         hoverOffset: 4
-                    //     },{
-                    //         label: 'Теплова енергія ',
-                    //         data: [320, 150, 320, 150, 250, 120, 170, 164, 145, 135, 110, 185],
-                    //         backgroundColor: [
-                    //             '#c90000',
-                    //         ],
-                    //         hoverOffset: 4
-                    //     },{
-                    //         label: 'Вода',
-                    //         data: [220, 150, 120, 50, 250, 120, 170, 164, 145, 135, 110, 185],
-                    //         backgroundColor: [
-                    //             '#008be8',
-                    //         ],
-                    //         hoverOffset: 4
-                    //     },
-                    //     {
-                    //         label: 'Газ',
-                    //         data: [200, 170, 300, 50, 350, 120, 165, 225, 245, 187, 194, 136],
-                    //         backgroundColor: [
-                    //             '#878e98'
-                    //         ],
-                    //         hoverOffset: 4
-                    //     }
-                    // ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'bottom',
-                        }
-                    }
-                },
+
+            function sevePrint(visibleSelect, main){
+            var postData = undefined;
+            main.forEach(function(item) {
+                if (item.month == visibleSelect) {
+                    postData = item
+                }
             });
+
+            $('#messages-table').empty();
+
+
+            // Выполняем POST-запрос
+            $.ajax({
+                type: 'POST',
+                url: '/',
+                data: {data: JSON.stringify(postData)},
+                headers: { 'X-CSRFToken': $('input[name="csrfmiddlewaretoken"]').val() },
+                success: function(response) {
+                      // Очищаем контейнер сообщений перед добавлением новых сообщений
+
+                      if (response) {
+
+                            var link = document.createElement('a');
+                            link.href = response.file_url;
+                            link.download = 'document.pdf'; // Имя файла для скачивания
+                            document.body.appendChild(link);
+                            link.click();
+                            document.body.removeChild(link);
+
+                        } else {
+                            // Обработка ошибки
+                            $('#messages-table').append('<div class="alert ' + 'alert-danger' + '" role="alert">' + 'Показання не оновлені' + '</div>');
+                        }
+                },
+                error: function(xhr, status, error) {
+                    $('#messages-table').append('<div class="alert ' + 'alert-danger' + '" role="alert">' + 'Показання не оновлені' + '</div>');
+                    console.error('Произошла ошибка при выполнении запроса', error);
+
+                }
+            });
+
+        }
+
+
+        $('.print_schet').on('click', function() {
+
+
+            var visibleSelect = $('#select-rachet').val();
+            var mainData = "{{raschet|safe}}";
+
+            var main = JSON.parse(mainData.replaceAll("\'","\""));
+            sevePrint(visibleSelect, main)
+
+        });
+
+
         });
 
 

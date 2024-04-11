@@ -142,6 +142,27 @@ function calculateDifferences() {
 </script>
 <script>
     $(document).ready(function() {
+
+        var dateInputs = document.querySelectorAll('input[type="date"]');
+
+        // Проходимся по каждому input
+        dateInputs.forEach(function(input) {
+            // Устанавливаем атрибуты min и max на текущий месяц
+            var today = new Date();
+            var selectedDate = new Date(input.value);
+            if (today.getMonth() === selectedDate.getMonth()) {
+                // Устанавливаем атрибуты min и max на сегодняшний день
+                minDate = maxDate = today.toISOString().split('T')[0];
+            } else {
+                var minDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 2).toISOString().split('T')[0];
+                var maxDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 1).toISOString().split('T')[0];
+            }
+
+            input.setAttribute('min', minDate);
+            input.setAttribute('max', maxDate);
+        });
+
+
         $('.select2').select2({
             placeholder: 'Виберіть рік',
             dropdownPosition: 'below',
