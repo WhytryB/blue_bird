@@ -2,9 +2,10 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Daktar - Hospital Managment HTML Template</title>
+    <title>PTAH Логин</title>
+     <meta name="description" content="login page">
 
     <!--Stylesheets-->
     <link rel="stylesheet" href="../static/css/plugins/bootstrap.min.css">
@@ -32,7 +33,7 @@
                 <div class="logo font-weight-bold text-center"><p class="mb-30px text-center">Введіть свій Логін та Пароль</p></div>
                 <div class="auth-form">
 
-                    <form method="post">
+                    <form method="post" action="/login/">
                         {% csrf_token %}
 
                         <div class="mb-3 position-relative">
@@ -68,7 +69,8 @@
                             {% endif %}
                         </div>
                         <div class="mb-3">
-                            <button type="submit" class="btn btn-primary w-100">Вхід в систему</button>
+
+                            <button type="submit" class="btn btn-primary w-100" name="login-button">Вхід в систему</button>
                         </div>
 
                     </form>

@@ -484,11 +484,11 @@
 
                         } else {
                             // Обработка ошибки
-                            $('#messages-table').append('<div class="alert ' + 'alert-danger' + '" role="alert">' + 'Показання не оновлені' + '</div>');
+                            $('#messages-table').append('<div class="alert ' + 'alert-danger' + '" role="alert">' + 'Помилка Друку' + '</div>');
                         }
                 },
                 error: function(xhr, status, error) {
-                    $('#messages-table').append('<div class="alert ' + 'alert-danger' + '" role="alert">' + 'Показання не оновлені' + '</div>');
+                    $('#messages-table').append('<div class="alert ' + 'alert-danger' + '" role="alert">' + 'Помилка Друку' + '</div>');
                     console.error('Произошла ошибка при выполнении запроса', error);
 
                 }
