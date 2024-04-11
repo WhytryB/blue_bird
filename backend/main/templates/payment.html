@@ -23,7 +23,7 @@
                                 <tbody><tr>
                                         <th> Сума яка буде оплачена з картки</th>
                                         <td>
-                                            <input type="number" id="lq1" name="lq1" class="form-control" placeholder="Сума з картки"  value="{{ostatok}}">
+                                            <input readonly type="number" id="lq1" name="lq1" class="form-control" placeholder="Сума з картки"  value="">
 
                                         </td>
                                 </tr>
@@ -38,7 +38,7 @@
                                 <tr>
                                         <th> Буде зараховано на рахунок </th>
                                         <td>
-                                             <input type="number" id="lq3" name="lq3" class="form-control" placeholder="Буде зараховано" readonly value="">
+                                             <input type="number" id="lq3" name="lq3" class="form-control" placeholder="Буде зараховано" value="{{ostatok}}">
 
                                         </td>
                                 </tr></tbody></table>
@@ -112,31 +112,48 @@
 {% block scripts %}
 <script>
 
-
 document.addEventListener("DOMContentLoaded", function() {
-    calculateAmount();
+    calculateAmount(true);
 });
+
 
 document.getElementById("lq1").addEventListener("input", function() {
-    calculateAmount();
+    calculateAmount(false);
 });
 
-function calculateAmount() {
-    var lq1 = parseFloat(document.getElementById("lq1").value);
-    var commissionPercentage = 1.5; // Комиссия в процентах
-    var bankCommission = 1; // Комиссия банка
-    var commission = (lq1 * commissionPercentage) / 100;
-    var result = lq1 - commission;
-    bankCommission = lq1 - result;
-    document.getElementById("lq2").value = bankCommission.toFixed(2);
-    document.getElementById("lq3").value = result.toFixed(2);
+document.getElementById("lq3").addEventListener("input", function() {
+    calculateAmount(true);
+});
+
+function calculateAmount(mode) {
+    if (mode) {
+        var lq1 = parseFloat(document.getElementById("lq3").value);
+        var commissionPercentage = 1.5; // Комиссия в процентах
+        var bankCommission = 1; // Комиссия банка
+        var commission = (lq1 * commissionPercentage) / 100;
+        var result = lq1 + commission;
+        bankCommission = lq1 - result;
+        document.getElementById("lq2").value =  Math.abs(bankCommission.toFixed(2));
+        document.getElementById("lq1").value = result.toFixed(2);
+    } else {
+        var lq1 = parseFloat(document.getElementById("lq1").value);
+        var commissionPercentage = 1.5; // Комиссия в процентах
+        var bankCommission = 1; // Комиссия банка
+        var commission = (lq1 * commissionPercentage) / 100;
+        var result = lq1 - commission;
+        bankCommission = lq1 - result;
+        document.getElementById("lq2").value = Math.abs(bankCommission.toFixed(2));
+        document.getElementById("lq3").value = result.toFixed(2);
+
+    }
+
 }
 
 $('#liqpay').on('click', function() {
     $.ajax({
         type: 'POST',
         url: '/payment/',
-        data: {'terminal':'{{selected_terminal}}','amount': parseFloat(document.getElementById("lq1").value)},
+        data: {'terminal':'{{selected_terminal}}','amount': parseFloat(document.getElementById("lq3").value)},
         headers: { 'X-CSRFToken': $('input[name="csrfmiddlewaretoken"]').val() },
         success: function(response) {
               // Очищаем контейнер сообщений перед добавлением новых сообщений
