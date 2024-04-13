@@ -1519,4 +1519,17 @@ def execute_script(request):
     print(request)
     print(request_id)
     print(request.GET.__dict__)
+    query_params = request.GET
+    # Получаем данные из тела запроса
+    body_data = request.body
+    # Печатаем строку запроса
+    print(request)
+    # Печатаем параметры строки запроса
+    print("Query Params:", query_params)
+    # Печатаем данные из тела запроса
+    print("Body Data:", body_data)
+
+    # Получаем значение параметра request_id
+    request_id = query_params.get("request_id")
+    print("Request ID:", request_id)
     return JsonResponse({"success": True}, status=200, safe=False)
