@@ -1516,5 +1516,7 @@ def execute_script(request):
     request_id = request.GET.get('request_id')
     if not request_id:
         return JsonResponse({"error": "Unauthorized request"}, status=401)
-
+    print(request)
+    print(request_id)
+    print(request.json())
     return JsonResponse({"success": True}, status=200, safe=False)
