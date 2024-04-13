@@ -1518,5 +1518,5 @@ def execute_script(request):
         return JsonResponse({"error": "Unauthorized request"}, status=401)
     print(request)
     print(request_id)
-    print(request.json())
+    print(request.GET.__dict__)
     return JsonResponse({"success": True}, status=200, safe=False)
