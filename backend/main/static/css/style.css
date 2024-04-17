@@ -5,6 +5,27 @@
   width: 15px;
 }
 
+.card-mobile-none {
+  display: none !important;
+}
+@media screen and (max-width: 990px) {
+
+    /* Скрыть блоки, начиная с пятого */
+    /*.card-mobile:nth-child(2) {*/
+    /*    display: none !important;*/
+    /*}*/
+    .card-mobile-sec:nth-child(1) {
+        display: none !important;
+    }
+    .card-mobile-sec:nth-child(2) {
+        display: none !important;
+    }
+
+    .card-mobile-none {
+      display: block !important;
+    }
+}
+
 .img-30px {
   height: 30px;
   width: 30px;

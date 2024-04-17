@@ -110,14 +110,14 @@ function calculateDifferences() {
         if (firstInput && secondInput && differenceInput) {
             // Функция для вычисления разницы
             var calculateDifference = function() {
-                var firstValue = parseFloat(firstInput.value) || 0;
-                var secondValue = parseFloat(secondInput.value) || 0;
+                var firstValue = parseInt(firstInput.value) || 0;
+                var secondValue = parseInt(secondInput.value) || 0;
 
                 // Проверяем, что значение secondValue не является нулевым, иначе просто присваиваем разнице значение первого значения
                 if (secondValue !== 0) {
-                    differenceInput.value = (secondValue - firstValue).toFixed(2);
+                    differenceInput.value = parseInt((secondValue - firstValue).toFixed(2));
                 } else {
-                    differenceInput.value = firstValue.toFixed(2);
+                    differenceInput.value =  parseInt(firstValue.toFixed(2));
                 }
             };
 

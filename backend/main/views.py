@@ -694,8 +694,8 @@ class CountersView(LoginRequiredMixin, TemplateView):
                                     "Month":  month_temp,
                                     "Name": name,
                                     "Number": number,
-                                    "Pokaz": float(entry["ПоказаниеПредыдущее"].encode('latin1').decode('unicode-escape').replace(" ", "").replace("\xa0", "").replace(',', '.')),
-                                    "Pokaz_prev": pokaz_prev,
+                                    "Pokaz": int(entry["ПоказаниеПредыдущее"].encode('latin1').decode('unicode-escape').replace(" ", "").replace("\xa0", "").replace(',', '.')),
+                                    "Pokaz_prev": int(pokaz_prev),
                                     "Month_name": month_name,
                                     "ПриборУчета": entry["ПриборУчета"],
                                     "ПриборУчетаКод": entry["ПриборУчетаКод"]
@@ -734,8 +734,8 @@ class CountersView(LoginRequiredMixin, TemplateView):
                             "Month":  month_temp,
                             "Name": name,
                             "Number": number,
-                            "Pokaz": pokaz_prev,
-                            "Pokaz_prev": pokaz_prev,
+                            "Pokaz": int(pokaz_prev),
+                            "Pokaz_prev": int(pokaz_prev),
                             "Month_name": month_name,
                             "ПриборУчета": current_pribor_data[0]["ПриборУчета"],
                             "ПриборУчетаКод": entry["ПриборУчетаКод"]
@@ -1528,6 +1528,7 @@ def execute_script(request):
     print("Query Params:", query_params)
     # Печатаем данные из тела запроса
     print("Body Data:", body_data)
+    print("Heades:", request.headers)
 
     # Получаем значение параметра request_id
     request_id = query_params.get("request_id")
