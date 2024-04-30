@@ -1626,7 +1626,7 @@ def execute_script(request):
         if patch_response:
 
 
-            vote = Vote(user=request.user, poll=current_vote_dia.poll, choice=current_vote_dia.choice)
+            vote = Vote(user=current_vote_dia.user, poll=current_vote_dia.poll, choice=current_vote_dia.choice)
             vote.save()
 
             current_vote_dia.hash_file = body_data
