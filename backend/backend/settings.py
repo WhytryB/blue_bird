@@ -41,8 +41,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'notifications',
     'main',
-    'corsheaders',
-    'django_telegram_login',
+    'corsheaders'
 ]
 
 MIDDLEWARE = [

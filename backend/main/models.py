@@ -106,6 +106,20 @@ class Vote(models.Model):
     def __str__(self):
         return f'{self.poll.text[:15]} - {self.choice.choice_text[:15]} - {self.user.username}'
 
+class DIA(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    poll = models.ForeignKey(Poll, on_delete=models.CASCADE)
+    choice = models.ForeignKey(Choice, on_delete=models.CASCADE, default=None)
+    request_id = models.CharField(max_length=255)
+    lich_code = models.CharField(max_length=255, null=True, blank=True)
+    hash_file = models.TextField(blank=True, null=True)
+    file_name =  models.CharField(max_length=255)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f'{self.poll.text[:15]} - {self.choice.choice_text[:15]} - {self.user.username}'
+
 
 class SupportTicket(models.Model):
     CATEGORY_CHOICES = [

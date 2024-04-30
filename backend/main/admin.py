@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import CustomUser, Poll, Choice, Vote, PhotoModel, SupportTicket, BackgroundModel
+from .models import CustomUser, Poll, Choice, Vote, PhotoModel, SupportTicket, BackgroundModel, DIA
 
 class CustomUserAdmin(UserAdmin):
     list_display = ('username', 'email', 'first_name', 'last_name', 'is_staff', 'profile_picture')
@@ -58,3 +58,8 @@ class VoteAdmin(admin.ModelAdmin):
 class SupportTicketAdmin(admin.ModelAdmin):
     list_display = ["category", "description", 'created_at']
     search_fields = ["category", "description"]
+
+
+@admin.register(DIA)
+class DIAAdmin(admin.ModelAdmin):
+    search_fields = ["request_id"]

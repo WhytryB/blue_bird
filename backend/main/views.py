@@ -1,4 +1,3 @@
-from django.shortcuts import render
 from django.contrib import messages
 import jinja2
 import pdfkit
@@ -6,7 +5,6 @@ from django.contrib.auth import login, authenticate, REDIRECT_FIELD_NAME, update
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.views import LogoutView as BaseLogoutView, FormView
 from django.views.generic.base import TemplateView
-from django.views.generic import CreateView
 from django.shortcuts import get_object_or_404, redirect
 from django.utils.decorators import method_decorator
 from django.utils.http import url_has_allowed_host_and_scheme as is_safe_url
@@ -16,23 +14,18 @@ from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.debug import sensitive_post_parameters
 from django.views.generic import View
 from django.conf import settings
-from django.urls import reverse_lazy
-from django.db.models import Count
-from django.core.paginator import Paginator
-from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-import requests
 import json
 from .utils import country_codes
 from datetime import datetime, timedelta
-
+from django.http import JsonResponse
 import pytz
 
 
 from .forms import (
     SignInViaUsernameForm, ChangeProfileForm, ChangePasswordPhoneForm, ChangePasswordCodeForm, ChangePasswordConfirmForm
 )
-from .models import Poll, Choice, Vote, SupportTicket, BackgroundModel
+from .models import Poll, Choice, Vote, SupportTicket, BackgroundModel, DIA as DIA_model
 from django.urls import reverse_lazy
 from .onec import OSBB
 from collections import defaultdict
@@ -44,9 +37,12 @@ from notifications.signals import notify
 from liqpay import LiqPay
 from django.contrib.auth.forms import PasswordResetForm
 from .sms_api import send_sms
+from .api_dia import DIA
+
 
 
 osbb = OSBB()
+dia = DIA()
 locale.setlocale(locale.LC_TIME, 'uk_UA.UTF-8')
 liqpay = LiqPay("bqCbtIAPI2JXLhmzFzfIjnvzoMZsCx+yCElEKuPJ5qkSV9k0V3hR4mhc8jSYMZBNAU+VQILGbqFT33GwUrHMCQ==",
                 "JGJRnXQqoqg+51jXxpKS4+37aJ0EeL756g8VNLPGAuHQipVi8u7TGr7Kbm28vgVIEciSYtUg0Y26hLkRH+4sID0EJDGQu48W1W3GxoE14TF3ZrTnO42II88M0KOk2CjU")
@@ -1061,22 +1057,24 @@ class VoteView(LoginRequiredMixin, TemplateView):
 
             # get_dict_copy = request.GET.copy()
             # params = get_dict_copy.pop('page', True) and get_dict_copy.urlencode()
+            last_poll = poll_data[0]
+
 
             context = {
-                "last_poll": poll_data[0],
+                "last_poll": last_poll,
                 'polls': poll_data[1:]
             }
             return context
 
      def post(self, request, *args, **kwargs):
 
-            choice_id = request.POST.get('choice')
+            choice_id = json.loads(request.body.decode('utf-8')).get('choice_id')
             choice_id, poll_id = choice_id.split('_')
             poll = Poll.objects.get(id=poll_id)
-            if not poll.user_can_vote(request.user):
-                messages.error(
-                    request, "Ви вже голосували в цьому опитуванні!", extra_tags='alert alert-warning alert-dismissible fade show')
-                return redirect("vote")
+            # if not poll.user_can_vote(request.user):
+            #     messages.error(
+            #         request, "Ви вже голосували в цьому опитуванні!", extra_tags='alert alert-warning alert-dismissible fade show')
+            #     return redirect("vote")
 
             if choice_id:
 
@@ -1090,7 +1088,6 @@ class VoteView(LoginRequiredMixin, TemplateView):
                         finded_doc = i
 
                 choice = Choice.objects.get(id=choice_id)
-
 
                 prev_results = finded_doc['РезультатыГолосования']
                 lich_code = self.request.session.get('lich')
@@ -1113,25 +1110,80 @@ class VoteView(LoginRequiredMixin, TemplateView):
                 if prev_results:
                     prev_results = {"РезультатыГолосования": prev_results}
 
-                patch_response = osbb.patch_vote(finded_doc['Ref_Key'], prev_results)
-                print("Patch", patch_response)
-                if patch_response:
+                # Создаем пустой список для хранения словарей
+                results = []
 
-                    choice = Choice.objects.get(id=choice_id)
-                    vote = Vote(user=request.user, poll=poll, choice=choice)
-                    vote.save()
-                    print(vote)
-                else:
-                    messages.error(
-                        request, "Помилка",
-                        extra_tags='alert alert-warning alert-dismissible fade show')
-                    return redirect("vote")
+                # Проходим по результатам голосования и добавляем в список словари в нужном формате
+                for result in prev_results['РезультатыГолосования']:
+                    vote = result['ВариантОтвета']
+                    results.append({'имя': vote, 'варианты': 1})
+
+                # Собираем результаты в словарь, где ключ - имя варианта ответа, а значение - суммарное количество голосов
+                votes_count = {}
+                for result in results:
+                    name = result['имя']
+                    if name in votes_count:
+                        votes_count[name] += 1
+                    else:
+                        votes_count[name] = result['варианты']
+
+                choice = Choice.objects.get(id=choice_id)
+
+                branches = dia.get_branches()
+                current_branch = None
+                for branch in branches['branches']:
+                    if branch['name'] == 'ЖК Синій птах голосвування':
+                        current_branch = branch
+                        break
+                offers = dia.get_offer(current_branch['_id'])
+                current_offer = None
+                head_offer = finded_doc['ДокументОснование'].get('ШапкаИнформационногоБюлетня')
+                for offer in offers['offers']:
+                    if offer['name'] == head_offer:
+                        current_offer = offer
+                        break
+
+                if not current_offer:
+                    print("Создание оффера дия")
+                    current_offer = dia.post_offer(current_branch['_id'], head_offer)
+
+                request_id = dia.hash_request_id()
+                last_poll = {'head_text': head_offer,
+                             'question': finded_doc['ВопросГолосования']['Description'],
+                             'results': votes_count,
+                             'user_name': request.user.last_name + ' ' + request.user.first_name + ' ' + request.user.middle_name,
+                             'user_answer': choice.choice_text}
+                file_name = f"{head_offer}{datetime.now().timestamp()}.pdf"
+                print("Prepare to craeate file")
+                dia.create_dia_file(last_poll, file_name)
+                file_hash = dia.calculate_file_hash(file_name)
+
+                link = dia.post_dynamic(current_branch['_id'], current_offer['_id'], request_id, file_name, file_hash )
+
+                if link:
+                    try:
+                        DIA_model.objects.create(poll=poll, request_id=request_id,  file_name=file_name,
+                                       choice=choice,  user=self.request.user, lich_code=lich_code)
+                        lis = DIA_model.objects.get(request_id=request_id)
+
+                    except Exception as e:
+                        print(e)
+                        messages.error(
+                            request, "Помилка!",
+                            extra_tags='alert alert-warning alert-dismissible fade show')
+                        return redirect("vote")
+                    return JsonResponse({'qr_image_base64': link['deeplink']})
+
                 return redirect("vote")
             else:
                 messages.error(
                     request, "Не вибрано жодного варіанту!", extra_tags='alert alert-warning alert-dismissible fade show')
                 return redirect("vote")
             return redirect("vote")
+
+
+
+
 
 class ArchiveView(LoginRequiredMixin, TemplateView):
     template_name = 'archive.html'
@@ -1513,24 +1565,74 @@ class LogOutView(CustomLogoutMixin, BaseLogoutView):
 @csrf_exempt
 def execute_script(request):
     # Перевірка, чи існує параметр request_id
-    request_id = request.GET.get('request_id')
-    if not request_id:
-        return JsonResponse({"error": "Unauthorized request"}, status=401)
-    print(request)
-    print(request_id)
-    print(request.GET.__dict__)
-    query_params = request.GET
-    # Получаем данные из тела запроса
-    body_data = request.body
-    # Печатаем строку запроса
-    print(request)
-    # Печатаем параметры строки запроса
-    print("Query Params:", query_params)
-    # Печатаем данные из тела запроса
-    print("Body Data:", body_data)
-    print("Heades:", request.headers)
+    try:
+        request_id = request.GET.get('request_id')
+        if not request_id:
+            return JsonResponse({"error": "Unauthorized request"}, status=401)
+        print(request)
+        print(request_id)
+        print(request.GET.__dict__)
+        query_params = request.GET
+        # Получаем данные из тела запроса
+        body_data = request.body
+        # Печатаем строку запроса
+        print(request)
+        # Печатаем параметры строки запроса
+        print("Query Params:", query_params)
+        # Печатаем данные из тела запроса
+        print("Body Data:", body_data)
+        print("Heades:", request.headers)
 
-    # Получаем значение параметра request_id
-    request_id = query_params.get("request_id")
-    print("Request ID:", request_id)
+        # Получаем значение параметра request_id
+        request_id = request.headers.get('X-Document-Request-Trace-Id')
+        print("Request ID:", request_id)
+
+        current_vote_dia = DIA_model.objects.get(request_id = request_id)
+
+        votes_doc = osbb.get_votes_doc()
+        finded_doc = None
+        for i in votes_doc:
+            number = i['ДокументОснование'].get('Number')
+            head_text = i['ДокументОснование'].get('ШапкаИнформационногоБюлетня')
+
+            if number + head_text == current_vote_dia.poll.text:
+                finded_doc = i
+
+
+
+        prev_results = finded_doc['РезультатыГолосования']
+
+        lich_response = osbb.get_lic_odata()
+        lich_ref = None
+        for i in lich_response:
+            if i['Code'] == str(current_vote_dia.lich_code):
+                lich_ref = i['Ref_Key']
+        last_result = prev_results[-1]
+        data = {
+            "LineNumber": str(int(last_result['LineNumber']) + 1),
+            "ВариантОтвета": current_vote_dia.choice.choice_text,
+            "ЛицевойСчет_Key": lich_ref,
+            "ОтветственныйВладелец_Key": "00000000-0000-0000-0000-000000000000"
+        }
+        for i in prev_results:
+            del i['Ref_Key']
+        prev_results.append(data)
+
+        if prev_results:
+            prev_results = {"РезультатыГолосования": prev_results}
+
+        patch_response = osbb.patch_vote(finded_doc['Ref_Key'], prev_results)
+        print("Patch", patch_response)
+        if patch_response:
+
+
+            vote = Vote(user=request.user, poll=current_vote_dia.poll, choice=current_vote_dia.choice)
+            vote.save()
+
+            current_vote_dia.hash_file = body_data
+            print(vote)
+        else:
+            print("Error in patch vote 1c")
+    except Exception as e:
+        print(f"Error in dia request {e}")
     return JsonResponse({"success": True}, status=200, safe=False)

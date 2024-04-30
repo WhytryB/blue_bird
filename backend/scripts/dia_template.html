@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Результаты голосования</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+        }
+        .poll-info {
+            margin-bottom: 20px;
+        }
+        .poll-question {
+            margin-bottom: 10px;
+        }
+        .poll-options {
+            list-style-type: none;
+            padding: 0;
+        }
+        .poll-option {
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container" style="border: 1px black solid; padding: 60px; padding-bottom: 120px !important;">
+        <h1>{{ head_text }}</h1>
+        <div class="poll-info">
+            <p><strong>Питання голосування:</strong> {{ question }}</p>
+        </div>
+        <h2>Результати голосування:</h2>
+        <ul class="poll-options">
+            {% for option in results %}
+            <li class="poll-option">
+                <strong>{{ option['имя'] }}:</strong> {{ option['варианты'] }}
+            </li>
+            {% endfor %}
+        </ul>
+        <div>
+            <p><strong>Ім'я користувача:</strong> {{ user_name }}</p>
+            <p><strong>Відповідь користувача:</strong> {{ user_answer }}</p>
+        </div>
+    </div>
+
+</body>
+</html>

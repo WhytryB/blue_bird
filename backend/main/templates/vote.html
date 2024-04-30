@@ -46,7 +46,7 @@
                         <div class="row">
                             <div class="col-md-4">
                                 <div class="centered-div pl-25px pr-25px">
-                                    <form action="{% url 'vote'  %}" class="poll-form" method="POST">
+                                    <form id="yourForm" action="{% url 'vote'  %}" class="poll-form" method="POST">
                                         {% csrf_token %}
                                         <h4 class="pt-30px pb-30px">Виберіть відповідь:</h4>
 
@@ -84,6 +84,16 @@
                                 </div>
                             </div>
                         </div>
+                        <div id="myModal" class="modal" style="padding-left: 20%; overflow: hidden;">
+                          <div class="modal-content">
+                            <!-- Container for the QR code -->
+                              <span style="    text-align: end;" class="close" onclick="closeModal()">&times;</span>
+                              <p style="text-align: center" class="pb-4">Для підтвердження голосування проскануйте QR код через QR сканер або застосунок DIA та зробіть підтвердження в самому застосунку DIA</p>
+                                <div class="pb-4" id="qrcode" style="    justify-content: center !important; display: flex;"></div>
+                              <p style="text-align: center" class="pt-2 pb-4">  Після підтвердження оновіть сторінку </p>
+                          </div>
+                        </div>
+
                         {% if messages %}
                         <div class="messages">
                             {% for message in messages %}
@@ -225,6 +235,8 @@
 {% endblock %}
 {% block scripts %}
 <script src="../static/js/plugins/select2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs/qrcode.min.js"></script>
+
 <script src="../static/js/plugins/owl.carousel.min.js"></script>
 <script>
     (function($){
@@ -271,16 +283,88 @@
         });
     }(jQuery))
 
-    function showModal(modalId) {
-        let modal = document.getElementById('myModal');
-        modal.style.display = 'block';
+
+    function updateQRCodeModal(qrCodeUrl) {
+      var modal = document.getElementById("myModal");
+      document.getElementById("qrcode").innerHTML = "";
+
+  // Generate the QR code with desired content
+      var qrCode = new QRCode(document.getElementById("qrcode"), {
+        text: qrCodeUrl, // Content for the QR code
+        width: 256, // Width of the QR code
+        height: 256, // Height of the QR code
+        colorDark : "#000000", // Color of the dark squares
+        colorLight : "#ffffff", // Color of the light squares
+        correctLevel : QRCode.CorrectLevel.H // Error correction level
+      });
+
+      // Display the modal
+      modal.style.display = "block";
+
+      window.onclick = function(event) {
+        if (event.target == modal) {
+          modal.style.display = "none";
+        }
+      }
+
+  // Показать модальное окно
+
+}
+
+function closeModal() {
+  var modal = document.getElementById("myModal");
+  modal.style.display = "none";
+}
+
+// Обработчик события для формы отправки POST-запроса
+document.getElementById('yourForm').addEventListener('submit', function(event) {
+  event.preventDefault(); // Предотвратить отправку формы по умолчани
+    var selectedChoiceId;
+    var selectedChoice = document.querySelector('input[name="choice"]:checked');
+    if (selectedChoice) {
+        selectedChoiceId = selectedChoice.value; // Разделить строку и получить первый элемент
+    } else {
+        // Если ничего не выбрано, выполните необходимые действия (например, показать сообщение об ошибке)
+        console.error('Ничего не выбрано');
+        return;
     }
 
-    function hideModal(modalId) {
-        var modal = document.getElementById(modalId);
-        var overlay = document.querySelector('.overlay');
-        modal.style.display = 'none';
-        overlay.style.display = 'none';
+    // Создать объект FormData для отправки данных формы
+
+  // Отправить POST-запрос на сервер
+  fetch('', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': getCookie('csrftoken'), // Получение CSRF-токена из куки (если используется)
+    },
+    // Данные запроса, если это необходимо
+    body: JSON.stringify({ choice_id: selectedChoiceId }),
+  })
+  .then(response => {
+    // Проверить, был ли успешно выполнен запрос
+    if (!response.ok) {
+      throw new Error('Произошла ошибка при выполнении запроса');
     }
+    return response.json(); // Преобразовать ответ в JSON-формат
+  })
+  .then(data => {
+    // Обновить модальное окно с QR-кодом на основе данных из ответа
+    updateQRCodeModal(data.qr_image_base64);
+  })
+  .catch(error => {
+    console.error('Ошибка:', error);
+    // Обработать ошибку, если необходимо
+  });
+});
+
+// Функция для получения CSRF-токена из куки
+function getCookie(name) {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop().split(';').shift();
+}
+
+
 </script>
 {% endblock %}
