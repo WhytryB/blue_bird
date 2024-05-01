@@ -89,23 +89,18 @@
                             <!-- Container for the QR code -->
                               <span style="    text-align: end;" class="close" onclick="closeModal()">&times;</span>
                               <p style="text-align: center" class="pb-4">Для підтвердження голосування проскануйте QR код через QR сканер або застосунок DIA та зробіть підтвердження в самому застосунку DIA</p>
-                                <div class="pb-4" id="qrcode" style="    justify-content: center !important; display: flex;"></div>
+                                <div class="pb-3" id="qrcode" style="    justify-content: center !important; display: flex;"></div>
+                              <p style="text-align: center" class="pt-1 pb-3">  або через телефон </p>
+                              <a style="text-align: center" class="pt-1 pb-4" id="linkdia"> </a>
                               <p style="text-align: center" class="pt-2 pb-4">  Після підтвердження оновіть сторінку </p>
                           </div>
                         </div>
 
-                        {% if messages %}
-                        <div class="messages">
-                            {% for message in messages %}
-                            <div class="alert {% if message.tags %} alert-{{ message.tags }} {% endif %} alert-dismissible fade show" role="alert">
-                                {{ message }}
-                                <button type="button" class="btn-close" data-dismiss="alert" aria-label="Close" onclick="closeMessage(this)">
-                                    <span aria-hidden="true">&times;</span>
-                                </button>
-                            </div>
-                            {% endfor %}
+
+                        <div id='message-container' class="messages pb-2 pt-2" style="display:none;">
+
                         </div>
-                        {% endif %}
+
                     </div>
                 </div>
             </div>
@@ -287,6 +282,9 @@
     function updateQRCodeModal(qrCodeUrl) {
       var modal = document.getElementById("myModal");
       document.getElementById("qrcode").innerHTML = "";
+      var element = document.getElementById("linkdia");
+      element.setAttribute("href", qrCodeUrl);
+      element.textContent = qrCodeUrl;
 
   // Generate the QR code with desired content
       var qrCode = new QRCode(document.getElementById("qrcode"), {
@@ -311,9 +309,19 @@
 
 }
 
+function closeMessage(button) {
+        // Находим родительский элемент (сообщение) кнопки
+        var messageDiv = button.parentElement;
+
+        // Скрываем сообщение
+        messageDiv.style.display = 'none';
+
+    }
+
 function closeModal() {
   var modal = document.getElementById("myModal");
   modal.style.display = "none";
+
 }
 
 // Обработчик события для формы отправки POST-запроса
@@ -350,7 +358,13 @@ document.getElementById('yourForm').addEventListener('submit', function(event) {
   })
   .then(data => {
     // Обновить модальное окно с QR-кодом на основе данных из ответа
-    updateQRCodeModal(data.qr_image_base64);
+     if (data.success) {
+        updateQRCodeModal(data.qr_image_base64);
+    } else {
+        console.error('Произошла ошибка:', data.error_message);
+        // Отобразить сообщение об ошибке на странице
+        showMessage(data.error_message);
+    }
   })
   .catch(error => {
     console.error('Ошибка:', error);
@@ -358,6 +372,22 @@ document.getElementById('yourForm').addEventListener('submit', function(event) {
   });
 });
 
+
+function showMessage(message) {
+    // Создать элемент для сообщения
+    var messageElement = document.createElement('div');
+    messageElement.classList.add('alert', 'alert-danger');
+    messageElement.textContent = message;
+
+    // Добавить сообщение на страницу
+    var messageContainer = document.getElementById('message-container');
+    messageContainer.style.display = "block";
+    messageElement.insertAdjacentHTML('beforeend', "<button style='float: right' type=\"button\" class=\"btn-close\" data-dismiss=\"alert\" aria-label=\"Close\" onclick=\"closeMessage(this)\">\n" +
+                                               "    <span aria-hidden=\"true\"></span>\n" +
+                                               "</button>");
+    messageContainer.appendChild(messageElement);
+
+}
 // Функция для получения CSRF-токена из куки
 function getCookie(name) {
   const value = `; ${document.cookie}`;
@@ -365,6 +395,16 @@ function getCookie(name) {
   if (parts.length === 2) return parts.pop().split(';').shift();
 }
 
+ function showModal(modalId) {
+        let modal = document.getElementById('myModal');
+        modal.style.display = 'block';
+    }
 
+function hideModal(modalId) {
+    var modal = document.getElementById(modalId);
+    var overlay = document.querySelector('.overlay');
+    modal.style.display = 'none';
+    overlay.style.display = 'none';
+}
 </script>
 {% endblock %}

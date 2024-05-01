@@ -1042,7 +1042,7 @@ class VoteView(LoginRequiredMixin, TemplateView):
 
                     poll_dict = {"Poll_data": poll, "head_text": head_text,
                                  "ФормаГолос": data_vote['ФормаГолосования']['Description'],
-                                 "Data": '',
+                                 "Data": data_vote['Date'],
                                  "ВопросГолосования": data_vote['ВопросГолосования']['Description'],
                                  "РезультатГолосования": result_list}
                     poll_data.append(poll_dict)
@@ -1057,12 +1057,14 @@ class VoteView(LoginRequiredMixin, TemplateView):
 
             # get_dict_copy = request.GET.copy()
             # params = get_dict_copy.pop('page', True) and get_dict_copy.urlencode()
-            last_poll = poll_data[0]
+
+            sorted_data = sorted(poll_data, key=lambda x: x['Data'], reverse=True)
+            last_poll = sorted_data[0]
 
 
             context = {
                 "last_poll": last_poll,
-                'polls': poll_data[1:]
+                'polls': sorted_data[1:]
             }
             return context
 
@@ -1071,10 +1073,15 @@ class VoteView(LoginRequiredMixin, TemplateView):
             choice_id = json.loads(request.body.decode('utf-8')).get('choice_id')
             choice_id, poll_id = choice_id.split('_')
             poll = Poll.objects.get(id=poll_id)
-            # if not poll.user_can_vote(request.user):
-            #     messages.error(
-            #         request, "Ви вже голосували в цьому опитуванні!", extra_tags='alert alert-warning alert-dismissible fade show')
-            #     return redirect("vote")
+            if not poll.user_can_vote(request.user):
+                # messages.error(
+                #     request, , extra_tags='alert alert-warning alert-dismissible fade show')
+                print("User already voted")
+
+
+                # Вернуть JSON-ответ с флагом успеха False и текстом ошибки
+                return JsonResponse({'success': False, 'error_message': "Ви вже голосували в цьому опитуванні!"})
+
 
             if choice_id:
 
@@ -1168,18 +1175,13 @@ class VoteView(LoginRequiredMixin, TemplateView):
 
                     except Exception as e:
                         print(e)
-                        messages.error(
-                            request, "Помилка!",
-                            extra_tags='alert alert-warning alert-dismissible fade show')
-                        return redirect("vote")
+                        return JsonResponse( {'success': False, 'error_message': "Помилка!"})
                     return JsonResponse({'qr_image_base64': link['deeplink']})
 
                 return redirect("vote")
             else:
-                messages.error(
-                    request, "Не вибрано жодного варіанту!", extra_tags='alert alert-warning alert-dismissible fade show')
-                return redirect("vote")
-            return redirect("vote")
+                return JsonResponse({'success': False, 'error_message': "Не вибрано жодного варіанту!"})
+            return JsonResponse({'success': False, 'error_message': "Помилка!"})
 
 
 
@@ -1513,15 +1515,6 @@ class LogInView(GuestOnlyView, FormView):
     def get_form_class(**kwargs):
         return SignInViaUsernameForm
 
-    @method_decorator(sensitive_post_parameters('password'))
-    @method_decorator(csrf_protect)
-    @method_decorator(never_cache)
-    def dispatch(self, request, *args, **kwargs):
-        # Sets a test cookie to make sure the user has cookies enabled
-        request.session.set_test_cookie()
-
-        return super().dispatch(request, *args, **kwargs)
-
     def form_valid(self, form):
         request = self.request
 
@@ -1630,6 +1623,7 @@ def execute_script(request):
             vote.save()
 
             current_vote_dia.hash_file = body_data
+            current_vote_dia.save()
             print(vote)
         else:
             print("Error in patch vote 1c")
