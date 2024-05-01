@@ -1143,12 +1143,22 @@ class VoteView(LoginRequiredMixin, TemplateView):
                 if not current_offer:
                     print("Create offer for DIA")
                     current_offer = dia.post_offer(current_branch['_id'], head_offer)
+                full_name = ''
+
+                if request.user.last_name is not None:
+                    full_name += request.user.last_name + ' '
+
+                if request.user.first_name is not None:
+                    full_name += request.user.first_name + ' '
+
+                if request.user.middle_name is not None:
+                    full_name += request.user.middle_name
 
                 request_id = dia.hash_request_id()
                 last_poll = {'head_text': head_offer,
                              'question': finded_doc['ВопросГолосования']['Description'],
                              'results': votes_count,
-                             'user_name': request.user.last_name + ' ' + request.user.first_name + ' ' + request.user.middle_name,
+                             'user_name': full_name,
                              'user_answer': choice.choice_text}
                 file_name = f"{head_offer}{datetime.now().timestamp()}.pdf"
                 print("Prepare to craeate file")
