@@ -81,13 +81,11 @@ class DIA:
         options = {
             "enable-local-file-access": None
         }
-        print("Cjp")
         file_ = open(f"main/media/temp/output_{file_name}.html", 'wb')
         file_.write(html_out.encode("utf-8"))
         file_.close()
-        print("Cjp2")
         if os.path.exists(f"main/media/temp/output_{file_name}.html"):
-            print("Файл успешно создан.")
+            print("File created")
         else:
             print("Ошибка: Файл не был создан.")
             time.sleep(3)

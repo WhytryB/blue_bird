@@ -214,12 +214,10 @@ class HomeView(LoginRequiredMixin, TemplateView):
                     month_name = f"{date.year} {calendar.month_name[date.month].capitalize()}"
                     service_name = dolg_data["Услуга"]
                     oplata = round(float(re.sub(r'[^\d.,]', '', dolg_data["СуммаОстаток"]).replace(',', '.')), 2)
-                    print(service_name)
-                    if month_key == '2023-06':
-                        print("d")
-                    print(month_key)
-                    print(result[month_key]["services"][service_name]["долг"])
-                    print(float(result[month_key]["services"][service_name]["долг"]), oplata)
+
+                    # print(month_key)
+                    # print(result[month_key]["services"][service_name]["долг"])
+                    # print(float(result[month_key]["services"][service_name]["долг"]), oplata)
                     result[month_key]["services"][service_name]["долг"] = round(float(result[month_key]["services"][service_name]["долг"]) + float(oplata), 2)
 
                     result[month_key]["month_dolg"] += round(oplata, 2)
@@ -750,7 +748,6 @@ class CountersView(LoginRequiredMixin, TemplateView):
     def post(self, request, *args, **kwargs):
         data = request.POST.get('data')
         if data:
-            print(data)
             response_list = {'data': []}
             lich = self.request.session.get('lich')
             lich_kv = self.request.session.get('lich_name')
@@ -782,7 +779,7 @@ class CountersView(LoginRequiredMixin, TemplateView):
                             "ПоказаниеПредыдущее": one_schetchik["Pokaz_prev"], "Показание": one_schetchik["Pokaz"]}
 
                     response = osbb.post_schetchik(data)
-                    print(response)
+
                     if response:
                         response_list['data'].append({'success': True, "Name": name_elem + '/' + one_schetchik["Number"]})
                     else:
@@ -846,7 +843,7 @@ class CarsView(LoginRequiredMixin, TemplateView):
 
         cars_response = osbb.get_cars_user(context['lich_selected'])
         if cars_response:
-            print(cars_response)
+
             owner = lich_response[0]['owner']
             owner_phone = lich_response[0]['owner_phone']
             for i in cars_response:
@@ -1036,10 +1033,6 @@ class VoteView(LoginRequiredMixin, TemplateView):
                         # Добавляем результат в список
                         result_list.append({'имя': field, 'варианты': count, 'проценты': percentage})
 
-                    # Выводим результат
-                    print(result_list)
-
-
                     poll_dict = {"Poll_data": poll, "head_text": head_text,
                                  "ФормаГолос": data_vote['ФормаГолосования']['Description'],
                                  "Data": data_vote['Date'],
@@ -1074,12 +1067,7 @@ class VoteView(LoginRequiredMixin, TemplateView):
             choice_id, poll_id = choice_id.split('_')
             poll = Poll.objects.get(id=poll_id)
             if not poll.user_can_vote(request.user):
-                # messages.error(
-                #     request, , extra_tags='alert alert-warning alert-dismissible fade show')
                 print("User already voted")
-
-
-                # Вернуть JSON-ответ с флагом успеха False и текстом ошибки
                 return JsonResponse({'success': False, 'error_message': "Ви вже голосували в цьому опитуванні!"})
 
 
@@ -1141,6 +1129,7 @@ class VoteView(LoginRequiredMixin, TemplateView):
                 for branch in branches['branches']:
                     if branch['name'] == 'ЖК Синій птах голосвування':
                         current_branch = branch
+                        print("Select branch for DIA")
                         break
                 offers = dia.get_offer(current_branch['_id'])
                 current_offer = None
@@ -1148,10 +1137,11 @@ class VoteView(LoginRequiredMixin, TemplateView):
                 for offer in offers['offers']:
                     if offer['name'] == head_offer:
                         current_offer = offer
+                        print("Select offer for DIA")
                         break
 
                 if not current_offer:
-                    print("Создание оффера дия")
+                    print("Create offer for DIA")
                     current_offer = dia.post_offer(current_branch['_id'], head_offer)
 
                 request_id = dia.hash_request_id()
@@ -1164,21 +1154,18 @@ class VoteView(LoginRequiredMixin, TemplateView):
                 print("Prepare to craeate file")
                 dia.create_dia_file(last_poll, file_name)
                 file_hash = dia.calculate_file_hash(file_name)
-
                 link = dia.post_dynamic(current_branch['_id'], current_offer['_id'], request_id, file_name, file_hash )
-
                 if link:
                     try:
                         DIA_model.objects.create(poll=poll, request_id=request_id,  file_name=file_name,
                                        choice=choice,  user=self.request.user, lich_code=lich_code)
-                        lis = DIA_model.objects.get(request_id=request_id)
 
                     except Exception as e:
                         print(e)
                         return JsonResponse( {'success': False, 'error_message': "Помилка!"})
-                    return JsonResponse({'qr_image_base64': link['deeplink']})
+                    return JsonResponse({'success': True, 'qr_image_base64': link['deeplink']})
 
-                return redirect("vote")
+                return JsonResponse({'success': False, 'error_message': "Помилка!"})
             else:
                 return JsonResponse({'success': False, 'error_message': "Не вибрано жодного варіанту!"})
             return JsonResponse({'success': False, 'error_message': "Помилка!"})
@@ -1562,23 +1549,12 @@ def execute_script(request):
         request_id = request.GET.get('request_id')
         if not request_id:
             return JsonResponse({"error": "Unauthorized request"}, status=401)
-        print(request)
-        print(request_id)
-        print(request.GET.__dict__)
         query_params = request.GET
-        # Получаем данные из тела запроса
         body_data = request.body
-        # Печатаем строку запроса
-        print(request)
-        # Печатаем параметры строки запроса
-        print("Query Params:", query_params)
-        # Печатаем данные из тела запроса
-        print("Body Data:", body_data)
-        print("Heades:", request.headers)
 
         # Получаем значение параметра request_id
         request_id = request.headers.get('X-Document-Request-Trace-Id')
-        print("Request ID:", request_id)
+        print("Successfully received a request from the DIA")
 
         current_vote_dia = DIA_model.objects.get(request_id = request_id)
 
@@ -1615,7 +1591,6 @@ def execute_script(request):
             prev_results = {"РезультатыГолосования": prev_results}
 
         patch_response = osbb.patch_vote(finded_doc['Ref_Key'], prev_results)
-        print("Patch", patch_response)
         if patch_response:
 
 
@@ -1624,7 +1599,7 @@ def execute_script(request):
 
             current_vote_dia.hash_file = body_data
             current_vote_dia.save()
-            print(vote)
+            print("Saved data for vote")
         else:
             print("Error in patch vote 1c")
     except Exception as e:

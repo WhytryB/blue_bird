@@ -47,7 +47,7 @@ class OSBB:
         if response.status_code == 200:
             response = response.json()
             if len(response.get('value', [])) > 0:
-                print(f"Found {len(response.get('value', []))}")
+                print(f"Response odata len:  {len(response.get('value', []))}")
                 return response.get('value', [])
             else:
                 print(f"Not found")
