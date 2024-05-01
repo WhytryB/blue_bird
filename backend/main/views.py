@@ -1014,15 +1014,20 @@ class VoteView(LoginRequiredMixin, TemplateView):
                     voting_fields = ["За", "Против", "Воздержался"]
 
                     # Вычисляем общее количество голосов
-                    total_votes = sum(int(result_votes[field]) for field in voting_fields)
-
+                    if result_votes:
+                        total_votes = sum(int(result_votes[field]) for field in voting_fields)
+                    else:
+                        total_votes = 0
                     # Создаем список для хранения результатов
                     result_list = []
 
                     # Проходим по выбранным полям для подсчета голосов
                     for field in voting_fields:
                         # Преобразуем количество голосов в целое число
-                        count = int(result_votes[field])
+                        if result_votes:
+                            count = int(result_votes[field])
+                        else:
+                            count = 0
 
                         # Вычисляем процент голосов для текущего варианта
                         if total_votes > 0:
