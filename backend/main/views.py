@@ -1599,6 +1599,8 @@ def execute_script(request):
 
             current_vote_dia.hash_file = body_data
             current_vote_dia.save()
+            notify.send(current_vote_dia.user, recipient=current_vote_dia.user, verb=f'Ви успішно підтвердили голосування')
+
             print("Saved data for vote")
         else:
             print("Error in patch vote 1c")
