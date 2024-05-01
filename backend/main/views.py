@@ -1080,7 +1080,9 @@ class VoteView(LoginRequiredMixin, TemplateView):
 
                 votes_doc = osbb.get_votes_doc()
                 finded_doc = None
+
                 for i in votes_doc:
+
                     number = i['ДокументОснование'].get('Number')
                     head_text = i['ДокументОснование'].get('ШапкаИнформационногоБюлетня')
 
@@ -1096,9 +1098,13 @@ class VoteView(LoginRequiredMixin, TemplateView):
                 for i in lich_response:
                     if i['Code'] == str(lich_code):
                         lich_ref = i['Ref_Key']
-                last_result = prev_results[-1]
+
+                if len(prev_results) == 0:
+                    line_number = str(1)
+                else:
+                    line_number = str(int(prev_results[-1]['LineNumber']) + 1)
                 data = {
-                    "LineNumber": str(int(last_result['LineNumber']) + 1),
+                    "LineNumber": line_number,
                     "ВариантОтвета": choice.choice_text,
                     "ЛицевойСчет_Key": lich_ref,
                     "ОтветственныйВладелец_Key": "00000000-0000-0000-0000-000000000000"
@@ -1591,9 +1597,12 @@ def execute_script(request):
         for i in lich_response:
             if i['Code'] == str(current_vote_dia.lich_code):
                 lich_ref = i['Ref_Key']
-        last_result = prev_results[-1]
+        if len(prev_results) == 0:
+            line_number = str(1)
+        else:
+            line_number = str(int(prev_results[-1]['LineNumber']) + 1)
         data = {
-            "LineNumber": str(int(last_result['LineNumber']) + 1),
+            "LineNumber": line_number,
             "ВариантОтвета": current_vote_dia.choice.choice_text,
             "ЛицевойСчет_Key": lich_ref,
             "ОтветственныйВладелец_Key": "00000000-0000-0000-0000-000000000000"
