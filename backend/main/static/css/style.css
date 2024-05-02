@@ -1972,6 +1972,8 @@ div.dataTables_wrapper div.dataTables_length select {
 }
 
 @media screen and (max-width: 1200px) {
+
+
   .mobile-font-size {
     font-size: 18px !important; /* Увеличенный размер шрифта для устройств с шириной экрана больше 768px */
   }
@@ -1993,6 +1995,19 @@ div.dataTables_wrapper div.dataTables_length select {
   background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
 }
 
+#myModal{
+  padding-left: 20% !important;
+}
+
+
+@media screen and (max-width: 990px) {
+  #myModal{
+    padding-left: 0 !important;
+  }
+  #qrcode img{
+    width: 50% !important;
+  }
+}
 /* Modal content */
 .modal-content {
   background-color: #fefefe;
