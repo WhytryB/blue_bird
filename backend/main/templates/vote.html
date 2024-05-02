@@ -53,7 +53,7 @@
 
                                         <!-- Опции голосования -->
                                         {% for choice in last_poll.Poll_data.choice_set.all %}
-                                        <div class="poll-option font-18px pt-5px " style="text-align: left ; padding-left: 20%; padding-right: 10%">
+                                        <div class="poll-option font-18px pt-5px " style="text-align: left ; padding-right: 10%">
 
                                             <input style=" text-align: left;" type="radio" name="choice" id="choice{{ forloop.counter }}" value="{{ choice.id }}_{{last_poll.Poll_data.id}}">
                                             <label style=" text-align: left;" for="choice{{ forloop.counter }}">{{ choice.choice_text }}</label>
