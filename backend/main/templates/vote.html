@@ -17,8 +17,10 @@
                 <div class="card-title text-uppercase font-weight-bold font-25px mb-30px">поточне голосування</div>
 
                 <div class="card card p-20px mb-25px">
-                    <div class="card-title text-uppercase font-weight-bold font-25px mb-30px">
-                        <p class="pb-15px text-center mobile-font-size">{{last_poll.head_text}}.<br>{{last_poll.ВопросГолосования}}
+                    <div class="card-title  font-weight-bold font-25px mb-30px">
+                        <p class=" text-center mobile-font-size"><b>Тема:</b> {{last_poll.head_text}}</p>
+                        <br>
+                         <p class="pb-15px text-center mobile-font-size"><b>Питання:</b>  {{last_poll.ВопросГолосования}}
                         </p>
                     </div>
                     <div class="card-body">
@@ -65,7 +67,7 @@
                                         {% endfor %}
 
                                         <!-- Кнопка для отправки голоса -->
-                                        <button style="max-width: 100%;" type="submit" value="Vote"  class="mobile-font-size-10 btn btn-lg btn-primary mt-30px mb-25px pl-30px pr-30px">Проголосувати</button>
+                                        <button style="max-width: 100%;" type="submit" value="Vote"  class="mobile-font-size-10 btn btn-lg btn-primary mt-30px mb-25px pl-30px pr-30px">Проголосувати<br>за допомогою Дія.Підпису</button>
                                     </form>
                                 </div>
                             </div>
@@ -88,11 +90,27 @@
                           <div class="modal-content">
                             <!-- Container for the QR code -->
                               <span style="    text-align: end;" class="close" onclick="closeModal()">&times;</span>
-                              <p style="text-align: center" class="pb-4">Для підтвердження голосування проскануйте QR код через QR сканер або застосунок DIA та зробіть підтвердження в самому застосунку DIA</p>
-                                <div class="pb-3" id="qrcode" style="    justify-content: center !important; display: flex;"></div>
-                              <p style="text-align: center" class="pt-1 pb-3">  або через телефон </p>
-                              <a style="text-align: center" class="pt-1 pb-4" id="linkdia"> </a>
-                              <p style="text-align: center" class="pt-2 pb-4">  Після підтвердження оновіть сторінку </p>
+                              <h4 class="pb-1 " style="text-align: center">Підписання у застосунку Дія</h4><br><p style="text-align: center" class="pb-4">Для підтвердження голосування натисніть на QR-код або зчитайте його сканером у застосунку Дія та дотримуйтеся подальших інструкцій.</p>
+                               <div class="pb-3" id="qrcode" style="    justify-content: center !important; display: flex;"></div>
+
+
+                              <div id="countdown" class="countdown">
+
+
+                                <span class="minutes countdown-time"></span>
+
+
+
+                                <span class="seconds countdown-time"></span>
+
+
+                            </div>
+                              <div id="deadline-message" class="deadline-message">
+                                  <p style="text-align: center" class="pt-1 pb-1">Час посилання минув, оновіть сторінку</p>
+
+                              </div>
+
+                              <p style="text-align: center" class="pt-4 pb-4">  Посилання дійсне 3 хв.  Після підтвердження оновіть сторінку </p>
                           </div>
                         </div>
 
@@ -279,12 +297,59 @@
     }(jQuery))
 
 
-    function updateQRCodeModal(qrCodeUrl) {
+
+
+
+function getTimeRemaining(endtime) {
+  var t = Date.parse(endtime) - Date.parse(new Date());
+  var seconds = Math.floor((t / 1000) % 60);
+  var minutes = Math.floor((t / 1000 / 60) % 60);
+  var hours = Math.floor((t / (1000 * 60 * 60)) % 24);
+  var days = Math.floor(t / (1000 * 60 * 60 * 24));
+  return {
+    total: t,
+    days: days,
+    hours: hours,
+    minutes: minutes,
+    seconds: seconds
+  };
+}
+
+function initializeClock(id, endtime) {
+  var clock = document.getElementById(id);
+
+  var minutesSpan = clock.querySelector(".minutes");
+  var secondsSpan = clock.querySelector(".seconds");
+
+  function updateClock() {
+    var t = getTimeRemaining(endtime);
+
+    if (t.total <= 0) {
+      document.getElementById("countdown").className = "hidden";
+      document.getElementById("deadline-message").className = "visible";
+      clearInterval(timeinterval);
+      return true;
+    }
+
+
+    minutesSpan.innerHTML = ("0" + t.minutes).slice(-2);
+    secondsSpan.innerHTML = ("0" + t.seconds).slice(-2);
+}
+
+    updateClock();
+  var timeinterval = setInterval(updateClock, 1000);
+}
+
+    //var deadline = "January 01 2018 00:00:00 GMT+0300"; //for Ukraine
+    var deadline = new Date(Date.parse(new Date()) + 180 * 1000); // for endless timer
+    initializeClock("countdown", deadline);
+function updateQRCodeModal(qrCodeUrl) {
       var modal = document.getElementById("myModal");
-      document.getElementById("qrcode").innerHTML = "";
-      var element = document.getElementById("linkdia");
-      element.setAttribute("href", qrCodeUrl);
-      element.textContent = qrCodeUrl;
+      var qr_code =  document.getElementById("qrcode");
+      qr_code.innerHTML = "";
+      qr_code.addEventListener('click', () => {
+            window.location.href = qrCodeUrl;
+      });
 
   // Generate the QR code with desired content
       var qrCode = new QRCode(document.getElementById("qrcode"), {

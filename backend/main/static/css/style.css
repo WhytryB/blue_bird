@@ -2016,3 +2016,55 @@ div.dataTables_wrapper div.dataTables_length select {
   border: 1px solid #888;
   width: 80%;
 }
+
+
+
+.countdown-title {
+  color: #396;
+  font-weight: 100;
+  font-size: 40px;
+  margin: 40px 0px 20px;
+}
+
+.countdown {
+  font-family: sans-serif;
+  color: #fff;
+  display: inline-block;
+  font-weight: 100;
+  text-align: center;
+  font-size: 30px;
+}
+
+.countdown-number {
+  padding: 10px;
+  border-radius: 3px;
+  background: #00bf96;
+  display: inline-block;
+}
+
+.countdown-time {
+  padding: 15px;
+  border-radius: 3px;
+  background: #064099;
+  display: inline-block;
+}
+
+.countdown-text {
+  display: block;
+  padding-top: 5px;
+  font-size: 16px;
+}
+
+.deadline-message{
+  display: none;
+  font-size: 24px;
+  font-style: italic;
+}
+
+.visible{
+  display: block;
+}
+
+.hidden{
+  display: none;
+}

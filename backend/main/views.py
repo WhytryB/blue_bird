@@ -20,6 +20,7 @@ from .utils import country_codes
 from datetime import datetime, timedelta
 from django.http import JsonResponse
 import pytz
+import urllib.parse
 
 
 from .forms import (
@@ -1068,7 +1069,14 @@ class VoteView(LoginRequiredMixin, TemplateView):
 
      def post(self, request, *args, **kwargs):
 
-            choice_id = json.loads(request.body.decode('utf-8')).get('choice_id')
+            try:
+                choice_id = json.loads(request.body.decode('utf-8')).get('choice_id')
+
+            except Exception as e:
+
+                choice_id = urllib.parse.parse_qs(request.body.decode('utf-8')).get('choice')[0]
+
+
             choice_id, poll_id = choice_id.split('_')
             poll = Poll.objects.get(id=poll_id)
             if not poll.user_can_vote(request.user):
@@ -1166,7 +1174,8 @@ class VoteView(LoginRequiredMixin, TemplateView):
                     full_name += request.user.middle_name
 
                 request_id = dia.hash_request_id()
-                last_poll = {'head_text': head_offer,
+                last_poll_head_text = f"Участь в голосуванні за ініціативи будинку ОСББ «СИНІЙ ПТАХ». Тема: {head_offer} "
+                last_poll = {'head_text': last_poll_head_text,
                              'question': finded_doc['ВопросГолосования']['Description'],
                              'results': votes_count,
                              'user_name': full_name,
