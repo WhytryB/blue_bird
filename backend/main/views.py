@@ -1153,15 +1153,17 @@ class VoteView(LoginRequiredMixin, TemplateView):
                 offers = dia.get_offer(current_branch['_id'])
                 current_offer = None
                 head_offer = finded_doc['ДокументОснование'].get('ШапкаИнформационногоБюлетня')
+                last_poll_head_text = f"Участь в голосуванні за ініціативи будинку ОСББ «СИНІЙ ПТАХ». Тема: {head_offer} "
                 for offer in offers['offers']:
-                    if offer['name'] == head_offer:
+                    if offer['name'] == last_poll_head_text:
                         current_offer = offer
                         print("Select offer for DIA")
                         break
 
                 if not current_offer:
                     print("Create offer for DIA")
-                    current_offer = dia.post_offer(current_branch['_id'], head_offer)
+
+                    current_offer = dia.post_offer(current_branch['_id'], last_poll_head_text)
                 full_name = ''
 
                 if request.user.last_name is not None:
@@ -1174,8 +1176,8 @@ class VoteView(LoginRequiredMixin, TemplateView):
                     full_name += request.user.middle_name
 
                 request_id = dia.hash_request_id()
-                last_poll_head_text = f"Участь в голосуванні за ініціативи будинку ОСББ «СИНІЙ ПТАХ». Тема: {head_offer} "
-                last_poll = {'head_text': last_poll_head_text,
+
+                last_poll = {'head_text': head_offer,
                              'question': finded_doc['ВопросГолосования']['Description'],
                              'results': votes_count,
                              'user_name': full_name,
