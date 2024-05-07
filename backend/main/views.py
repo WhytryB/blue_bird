@@ -1036,8 +1036,13 @@ class VoteView(LoginRequiredMixin, TemplateView):
                         else:
                             percentage = 0.0
 
+                        field_name = "Утримався"
+                        if field == 'Против':
+                            field_name = 'Проти'
+                        elif field == 'За':
+                            field_name = field
                         # Добавляем результат в список
-                        result_list.append({'имя': field, 'варианты': count, 'проценты': percentage})
+                        result_list.append({'имя': field_name, 'варианты': count, 'проценты': percentage})
 
                     poll_dict = {"Poll_data": poll, "head_text": head_text,
                                  "ФормаГолос": data_vote['ФормаГолосования']['Description'],
@@ -1612,9 +1617,16 @@ def execute_script(request):
             line_number = str(1)
         else:
             line_number = str(int(prev_results[-1]['LineNumber']) + 1)
+        choice_text_s = current_vote_dia.choice.choice_text
+        if choice_text_s == 'Проти':
+            choice_text_s = "Против"
+        elif choice_text_s == 'За':
+            pass
+        else:
+            choice_text_s = "Воздержался"
         data = {
             "LineNumber": line_number,
-            "ВариантОтвета": current_vote_dia.choice.choice_text,
+            "ВариантОтвета": choice_text_s,
             "ЛицевойСчет_Key": lich_ref,
             "ОтветственныйВладелец_Key": "00000000-0000-0000-0000-000000000000"
         }
