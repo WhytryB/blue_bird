@@ -42,15 +42,15 @@
 
                             <span class="icon"><i class="fa fa-phone" aria-hidden="true"></i></span>
                             <div class="row">
-                                <div class="col-4">
-                                    <select style="padding-left: 39px !important;" class="form-select" id="country_code" name="country_code">
+                                <div class="col-5">
+                                    <select style="min-width: 80%; padding-left: 39px !important;" class="form-select" id="country_code" name="country_code">
                                         {% for i in country_codes %}
                                          <option value="{{ i.code }}" {% if i.name == 'UA' %}selected{% endif %}>{{ i.code }}</option>
                                         {% endfor %}
                                     </select>
 
                                 </div>
-                                <div class="col-8">
+                                <div class="col-7">
 
                                      {{ form.username }}
                                 </div>
