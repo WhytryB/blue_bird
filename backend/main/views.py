@@ -1488,25 +1488,26 @@ class SupportView(LoginRequiredMixin, TemplateView):
 
         support_response = osbb.get_tickets(lich_ref)
         tickets = []
-        for ticket in support_response:
-            status_odata = ticket.get('СтатусЗаявки')
-            status = 'Нова Заявка'
-            if status_odata == 'НоваяЗаявка':
-                status = 'Нова заявка'
-            elif status_odata == 'Принята':
-                status = 'Прийнята'
-            elif status_odata == 'Отменена':
-                status = 'Скасована'
-            elif status_odata == 'Выполнена':
-                status = 'Виконана'
-            formatted_date_time_str = ticket.get('Date').replace('T', ' ')
-            dict = {
+        if support_response:
+            for ticket in support_response:
+                status_odata = ticket.get('СтатусЗаявки')
+                status = 'Нова Заявка'
+                if status_odata == 'НоваяЗаявка':
+                    status = 'Нова заявка'
+                elif status_odata == 'Принята':
+                    status = 'Прийнята'
+                elif status_odata == 'Отменена':
+                    status = 'Скасована'
+                elif status_odata == 'Выполнена':
+                    status = 'Виконана'
+                formatted_date_time_str = ticket.get('Date').replace('T', ' ')
+                dict = {
 
-                "Date": formatted_date_time_str,
-                "Status": status,
-                "Text": ticket.get('ТекстЗаявки')
-            }
-            tickets.append(dict)
+                    "Date": formatted_date_time_str,
+                    "Status": status,
+                    "Text": ticket.get('ТекстЗаявки')
+                }
+                tickets.append(dict)
         context['tickets'] = tickets
         return context
     def post(self, request, *args, **kwargs):
