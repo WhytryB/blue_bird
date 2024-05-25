@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}Cars{% endblock %}
+{% block title %}ОСББ - Автомібіль{% endblock %}
 {% block extra_styles %}
 <link rel="stylesheet" href="../static/css/plugins/select2.min.css">
 {% endblock %}
@@ -43,6 +43,8 @@
                                 <a class="edit-btn btn btn-sm btn-dark">Редагувати</a>
                                 <a class="delete-btn btn btn-sm btn-danger">Видалити</a>
                             </td>
+                            <td class="ref_key" style="display: none">{{car.Ref_key}}</td>
+                            <td class="ref_keylic" style="display: none">{{car.Ref_keylic}}</td>
                         </tr>
                         {% endfor %}
 
@@ -213,7 +215,7 @@
             }
         });
 
-        function seveCarData(visibleTable){
+        function seveCarData(visibleTable, type, elem = {}){
             var postData = [];
             visibleTable.find('tr').each(function(index, row) {
                 var rowData = {};
@@ -221,6 +223,7 @@
 
                     var number_name = $(td).hasClass('number_car');
                     var view_car = $(td).hasClass('view_car');
+                    var ref_key = $(td).hasClass('ref_key');
 
 
                     if (number_name) {
@@ -229,6 +232,9 @@
                     } else if (view_car) {
                         var text = $(td).text().trim();
                         rowData["Вид"] = text;
+                    } else if (ref_key) {
+                        var text = $(td).text().trim();
+                        rowData["ref_key"] = text;
                     }
                 });
                 if (Object.keys(rowData).length !== 0){
@@ -244,7 +250,7 @@
             $.ajax({
                 type: 'POST',
                 url: '/cars/',
-                data: {data: JSON.stringify(postData)},
+                data: {data: JSON.stringify(postData), type: type, elem: JSON.stringify(elem)},
                 headers: { 'X-CSRFToken': $('input[name="csrfmiddlewaretoken"]').val() },
                 success: function(response) {
                       // Очищаем контейнер сообщений перед добавлением новых сообщений
@@ -253,7 +259,7 @@
                             location.reload();
                         } else {
                             // Обработка ошибки
-                            $('#messages-table').append('<div class="alert ' + 'alert-danger' + '" role="alert">' + 'Показання не оновлені' + '</div>');
+                            $('#messages-table').append('<div class="alert ' + 'alert-danger' + '" role="alert">' + response.status  + '</div>');
                         }
                 },
                 error: function(xhr, status, error) {
@@ -270,8 +276,13 @@
 
             // Получаем данные из видимой таблицы
             var visibleTable = $('#table1');
+            var elem_data = {'type': $(this).closest('tr').find('td.view_car').first().text(),
+                'ref': $(this).closest('tr').find('td.ref_key').first().text(),
+                'reflic': $(this).closest('tr').find('td.ref_keylic').first().text(),
+            }
             $(this).closest('tr').remove();
-            seveCarData(visibleTable)
+
+            seveCarData(visibleTable, 'delete', elem_data)
 
         });
 
@@ -353,12 +364,13 @@
                             location.reload();
                         } else {
                             // Обработка ошибки
-                            $('#messages').append('<div class="alert ' + 'alert-danger' + '" role="alert">' + 'Показання не додані' + '</div>');
+                            $('#messages').append('<div class="alert ' + 'alert-danger' + '" role="alert">' + response.status + '</div>');
                         }
 
 
                 },
                 error: function(xhr, status, error) {
+
                     $('#messages').append('<div class="alert ' + 'alert-danger' + '" role="alert">' + 'Показання не додані' + '</div>');
                     console.error('Произошла ошибка при выполнении запроса', error);
                 }
@@ -417,7 +429,12 @@
                 } else {
                     saveRow(tr, $(this));
                      var visibleTable = $('#table1');
-                     seveCarData(visibleTable);
+                     var elem_data = {'type': $(this).closest('tr').find('td.view_car').first().text(),
+                        'ref': $(this).closest('tr').find('td.ref_key').first().text(),
+                        'reflic': $(this).closest('tr').find('td.ref_keylic').first().text(),
+                         'number_car': $(this).closest('tr').find('td.number_car').first().text(),
+                    }
+                     seveCarData(visibleTable, 'edit', elem_data);
                 }
             });
 

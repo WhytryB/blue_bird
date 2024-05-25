@@ -81,9 +81,41 @@ class OSBB:
 
     @handle_errors
     def get_lic_odata(self):
-        response = self.session.get(f'{BD_HOST}Catalog_ЛицевыеСчета?$format=json', headers=self.headers)
+        response = self.session.get(f'{BD_HOST}Catalog_ЛицевыеСчета?$format=json&$expand=*', headers=self.headers)
         response = self.perform_resopnse_odata(response)
         return (response)
+
+
+    @handle_errors
+    def get_tickets(self, desc):
+        response = self.session.get(f"{BD_HOST}/Document_ЗаявкаНаПроведениеРемонта?$format=json&$expand=*&$filter=ЛицевойСчет/Description eq '{desc}'", headers=self.headers)
+
+        response = self.perform_resopnse_odata(response)
+        return (response)
+
+    @handle_errors
+    def patch_lic_odata(self, guid, data):
+        response = self.session.patch(f"{BD_HOST}Catalog_ОбъектыЛицевыхСчетов(guid'{guid}')?$format=json",
+                                    headers=self.headers,
+                                    json=data)
+        response = self.perform_resopnse_patch_odata(response)
+        return response
+
+    @handle_errors
+    def delete_lic_odata(self, guid):
+        response = self.session.delete(f"{BD_HOST}Catalog_ОбъектыЛицевыхСчетов(guid'{guid}')?$format=json",
+                                    headers=self.headers)
+        response = self.perform_resopnse_patch_odata(response)
+        return response
+
+
+    @handle_errors
+    def delete_licmain_odata(self, guid):
+        response = self.session.delete(f"{BD_HOST}Catalog_ЛицевыеСчета(guid'{guid}')?$format=json",
+                                    headers=self.headers)
+        response = self.perform_resopnse_patch_odata(response)
+        return response
+
 
 
     @handle_errors
@@ -190,6 +222,27 @@ class OSBB:
     def post_cars(self, data):
         response = self.session.post(f"{BD_1CAPI}Машины", json=data, headers=self.headers)
         response = self.perform_resopnse_api(response)
+        return response
+
+
+    @handle_errors
+    def post_new_lic(self, data):
+        response = self.session.post(f"{BD_1CAPI}Лицевой" , headers=self.headers, json=data)
+        response = self.perform_resopnse_api(response)
+        return response
+
+    @handle_errors
+    def post_new_obj(self, data):
+        response = self.session.post(f"{BD_HOST}Catalog_ОбъектыЛицевыхСчетов?$format=json",
+                                       headers=self.headers,  json=data)
+        response = self.perform_resopnse_patch_odata(response)
+        return response
+
+    @handle_errors
+    def post_new_ticket(self, data):
+        response = self.session.post(f"{BD_HOST}Document_ЗаявкаНаПроведениеРемонта?$format=json",
+                                       headers=self.headers,  json=data)
+        response = self.perform_resopnse_patch_odata(response)
         return response
 
     @handle_errors

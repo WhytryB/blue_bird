@@ -30,12 +30,58 @@
                     {% endif %}
 
                     <button class="btn btn-primary w-100 mt-5" type="submit">Далі</button>
-                </form>
+                 </form>
+                     <p id="countdown" class="mt-3 pt-3"></p>
+                    <a href="#" id="resend-link" class="mt-3 pt-3" style="display: none;">Відправити код знову</a>
+
+
                 </div>
             </div>
         </div>
     </div>
-        <script src="../../static/js/plugins/jquery.min.js"></script>
+    <script src="../../static/js/plugins/jquery.min.js"></script>
     <script src="../../static/js/plugins/bootstrap.min.js"></script>
+        <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            let countdownTime = 300; // 5 minutes in seconds
+            let countdownElement = document.getElementById('countdown');
+            let resendLink = document.getElementById('resend-link');
+
+            function startCountdown() {
+                let interval = setInterval(function() {
+                    let minutes = Math.floor(countdownTime / 60);
+                    let seconds = countdownTime % 60;
+                    countdownElement.textContent = `Надіслати код заново через ${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+                    countdownTime--;
+
+                    if (countdownTime < 0) {
+                        clearInterval(interval);
+                        countdownElement.style.display = 'none';
+                        resendLink.style.display = 'inline';
+                    }
+                }, 1000);
+            }
+
+            resendLink.addEventListener('click', function(e) {
+                e.preventDefault();
+                fetch('?resend_sms=true')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.error) {
+                           console.log(data.error)
+                        } else {
+
+                            countdownTime = 300; // Reset countdown
+                            countdownElement.style.display = 'inline';
+                            resendLink.style.display = 'none';
+                            startCountdown();
+                        }
+                    })
+                    .catch(error => console.error('Error:', error));
+            });
+
+            startCountdown();
+        });
+    </script>
 </body>
 </html>

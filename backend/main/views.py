@@ -1,3 +1,5 @@
+import time
+
 from django.contrib import messages
 import jinja2
 import pdfkit
@@ -37,7 +39,7 @@ import locale
 from notifications.signals import notify
 from liqpay import LiqPay
 from django.contrib.auth.forms import PasswordResetForm
-from .sms_api import send_sms
+from .sms_api import send_sms, KyivstarAPI
 from .api_dia import DIA
 
 
@@ -45,9 +47,9 @@ from .api_dia import DIA
 osbb = OSBB()
 dia = DIA()
 locale.setlocale(locale.LC_TIME, 'uk_UA.UTF-8')
-liqpay = LiqPay("bqCbtIAPI2JXLhmzFzfIjnvzoMZsCx+yCElEKuPJ5qkSV9k0V3hR4mhc8jSYMZBNAU+VQILGbqFT33GwUrHMCQ==",
-                "JGJRnXQqoqg+51jXxpKS4+37aJ0EeL756g8VNLPGAuHQipVi8u7TGr7Kbm28vgVIEciSYtUg0Y26hLkRH+4sID0EJDGQu48W1W3GxoE14TF3ZrTnO42II88M0KOk2CjU")
-
+liqpay = LiqPay("c/dtteBKYkgH/2zdbcwM7cYm4MgkdNjG91hVm5MXhTm2g5didgAKHPa1TaEu6+r/q9jW766VwgmwtoI1DFJDJw==",
+                "TDDmdJHViXGtK8tDS2JaayhhUhpnn65RNh+BGqRjbl1mFgje268+99eaAXq/LuS9OsRm4QsHmMUkDSqtSH2J0L/1B+VAxpPduxpOhV1+fJ0QIMrsItL0GZ13N2RULqXx")
+kyivstar_api = KyivstarAPI()
 def parse_date(date_str):
     return datetime.strptime(date_str, "%d.%m.%Y %H:%M:%S")
 
@@ -811,12 +813,15 @@ class CarsView(LoginRequiredMixin, TemplateView):
         lich = self.request.session.get('lich')
 
         lich_response = osbb.get_lich_user(self.request.user.username)
+        cars_place_existed = []
         if lich_response:
             result_dict = {}
             for item in lich_response:
                 number = item["number"]
                 name = item["name"]
                 code = item["code"]
+                if 'м.м' in name:
+                    cars_place_existed.append({"code": code, "name": name})
                 if number in result_dict:
                     # Если запись существует, добавляем текущее имя к существующему значению
                     result_dict[number]["codes"].append(code)
@@ -843,21 +848,105 @@ class CarsView(LoginRequiredMixin, TemplateView):
 
 
         cars_response = osbb.get_cars_user(context['lich_selected'])
-        if cars_response:
 
-            owner = lich_response[0]['owner']
-            owner_phone = lich_response[0]['owner_phone']
+
+        owner = lich_response[0]['owner']
+        owner_phone = lich_response[0]['owner_phone']
+        cars_response_name_str = ""
+        if cars_response:
             for i in cars_response:
+                cars_response_name_str += cars_response_name_str.join(i['НомерМашиноМеста'])
                 i.update({'owner': owner, 'owner_phone': owner_phone})
 
-            new_data = []
+
+        new_car_places = []
+        for car_exist in cars_place_existed:
+            if car_exist['name'] not in cars_response_name_str:
+                new_car_places.append(car_exist['name'])
+
+
+        if new_car_places:
+
+            if cars_response:
+                cars_list = [{"НомерМашиноМеста": i['НомерМашиноМеста'], "Вид": i['ВидМашиноМеста']} for i in
+                                     cars_response]
+            else:
+                cars_list = []
+
+            for car in new_car_places:
+                cars_list.append({"НомерМашиноМеста": car, "Вид": "Паркінг"})
+
+            grouped_data = {}
+            cars_existed = []
+            for item in cars_list:
+                vid = item["Вид"]
+                nomer = item["НомерМашиноМеста"]
+                if vid == 'Паркінг':
+                    cars_existed.append(nomer)
+                if vid not in grouped_data:
+                    grouped_data[vid] = [nomer]
+                else:
+                    grouped_data[vid].append(nomer)
+
+            # Проходимся по словарю и объединяем номера машиномест через запятую
+            cars_list = [{"Вид": vid, "НомерМашиноМеста": ", ".join(grouped_data[vid])} for vid in grouped_data]
+
+            response_cars_get = osbb.get_cars()
+            founded_dosc = []
+            for car in response_cars_get:
+                if car['Posted'] == True and car['ВидОперации'] == 'ИзменениеМашиноМест' and car['ЛицевойСчет'][
+                    'Code'] == lich:
+                    founded_dosc.append(car['Ref_Key'])
+
+            for car in founded_dosc:
+                osbb.delete_cars(car)
+
+
+
+            response_lic_odata = osbb.get_lic_odata()
+            finded_cars = []
+            for odata_item in response_lic_odata:
+                if odata_item['ОбъектЛицевогоСчета']:
+
+                    if odata_item['ОбъектЛицевогоСчета']['Description'] in  cars_existed:
+                        finded_cars.append(odata_item['ОбъектЛицевогоСчета']['Description'])
+            for j in cars_list:
+                if j.get('Вид') == 'Паркінг':
+                    j['НомерМашиноМеста'] = ", ".join(finded_cars)
+            data_json = {"Owner": self.request.user.username, "КодЗдания": "000000001",
+                         "ОрганизацияКод": "00-000001",
+                         "ПарИмя": lich, "ПриборыМашины": cars_list}
+            response = osbb.post_cars(data_json)
+            cars_response = osbb.get_cars_user(context['lich_selected'])
+            if cars_response:
+                for i in cars_response:
+
+                    i.update({'owner': owner, 'owner_phone': owner_phone})
+
+
+        new_data = []
+        response_lic_odata = osbb.get_lic_odata()
+        if cars_response:
             for item in cars_response:
                 nomera = item["НомерМашиноМеста"].split(", ")
+
+
                 for nomer in nomera:
+                    ref_key = None
+                    ref_key_lic = None
+                    if item['ВидМашиноМеста'] == 'Паркінг':
+                        for odata_item in response_lic_odata:
+                            if odata_item['ОбъектЛицевогоСчета']:
+                                if nomer == odata_item['ОбъектЛицевогоСчета']['Description']:
+                                    ref_key = odata_item['ОбъектЛицевогоСчета']['Ref_Key']
+                                    ref_key_lic = odata_item['Ref_Key']
                     new_item = item.copy()  # Создаем копию исходного словаря
                     new_item["НомерМашиноМеста"] = nomer  # Заменяем номер машиноместа на текущий
+                    new_item["Ref_key"] = ref_key
+                    new_item["Ref_keylic"] = ref_key_lic
                     new_data.append(new_item)
-            context['cars'] = new_data
+        print("Data get", lich_response)
+        context['cars'] = new_data
         return context
 
     def post(self, request, *args, **kwargs):
@@ -872,10 +961,24 @@ class CarsView(LoginRequiredMixin, TemplateView):
             for item in json.loads(data):
                 vid = item["Вид"]
                 nomer = item["НомерМашиноМеста"]
+
                 if vid not in grouped_data:
                     grouped_data[vid] = [nomer]
                 else:
                     grouped_data[vid].append(nomer)
+            type = request.POST.get('type')
+            if type != 'delete':
+                elem = json.loads(request.POST.get('elem'))
+                type_elem = elem['type']
+                number_car = elem['number_car']
+                if type_elem == "Паркінг":
+                    response_lic_odata = osbb.get_lic_odata()
+                    umber_car_place = number_car
+                    for odata_item in response_lic_odata:
+                        if odata_item['ОбъектЛицевогоСчета']:
+
+                            if umber_car_place == odata_item['ОбъектЛицевогоСчета']['Description']:
+                                return JsonResponse({'status': 'Таке машиномісце зайнято'})
 
             # Проходимся по словарю и объединяем номера машиномест через запятую
             cars_list = [{"Вид": vid, "НомерМашиноМеста": ", ".join(grouped_data[vid])} for vid in grouped_data]
@@ -892,15 +995,40 @@ class CarsView(LoginRequiredMixin, TemplateView):
             data_json = {"Owner": self.request.user.username, "КодЗдания": "000000001", "ОрганизацияКод": "00-000001",
                     "ПарИмя": lich, "ПриборыМашины": cars_list}
             response = osbb.post_cars(data_json)
+            print("Data for edit", data_json)
+
+            if type == 'delete':
+                elem = json.loads(request.POST.get('elem'))
+                type_elem = elem['type']
+                ref_elem = elem['ref']
+                ref_elemlic = elem['reflic']
+                if type_elem == 'Паркінг' and ref_elem:
+                    respnse_patch = osbb.delete_lic_odata(ref_elem)
+                    print(respnse_patch)
+                    respnse_patch = osbb.delete_licmain_odata(ref_elemlic)
+                    print(respnse_patch)
+
+            else:
+                elem = json.loads(request.POST.get('elem'))
+                type_elem = elem['type']
+                ref_elem = elem['ref']
+                ref_elemlic = elem['reflic']
+                number_car = elem['number_car']
+                if type_elem == 'Паркінг' and ref_elem:
+                    response_patch = osbb.patch_lic_odata(ref_elem,  { "Description": number_car,  "Суффикс": number_car.split('№ ')[-1]})
+                    print(response_patch)
+                    time.sleep(4)
             if response:
                 return JsonResponse({'status': 'success'})
             else:
-                return JsonResponse({'status': 'error'})
+                return JsonResponse({'status': 'Показання не додані' })
         data_new = request.POST.get('data_new')
         if data_new:
             cars_list = json.loads(data_new)
-            new_post_data = cars_list.pop()
 
+            if len(cars_list) >= 3:
+                return JsonResponse({'status': 'Не можна додати більше двох автомобілів'})
+            new_post_data = cars_list.pop()
             lich = self.request.session.get('lich')
             data_lich = new_post_data.get('data_lich')
             if lich != data_lich:
@@ -913,7 +1041,21 @@ class CarsView(LoginRequiredMixin, TemplateView):
 
             car_view = "Паркінг" if new_post_data.get('checkboxGroup1') == 'park' else 'Двір'
 
-            cars_list.append({"НомерМашиноМеста": new_post_data.get('number-car'), "Вид": car_view})
+
+            number_car_place = new_post_data.get('number-car')
+
+            if car_view == "Паркінг":
+                response_lic_odata = osbb.get_lic_odata()
+                umber_car_place = f"м.м № {new_post_data.get('pitnum')}"
+                for odata_item in response_lic_odata:
+                    if odata_item['ОбъектЛицевогоСчета']:
+
+                        if umber_car_place == odata_item['ОбъектЛицевогоСчета']['Description']:
+                            return JsonResponse({'status': 'Таке машиномісце зайнято'})
+
+
+                number_car_place = f"м.м № {new_post_data.get('pitnum')}"
+            cars_list.append({"НомерМашиноМеста": number_car_place, "Вид": car_view})
 
             grouped_data = {}
             for item in cars_list:
@@ -942,10 +1084,44 @@ class CarsView(LoginRequiredMixin, TemplateView):
             data_json = {"Owner": self.request.user.username, "КодЗдания": "000000001", "ОрганизацияКод": "00-000001",
                          "ПарИмя": data_lich, "ПриборыМашины": cars_list}
             response = osbb.post_cars(data_json)
+
+            car_view = "Паркінг" if new_post_data.get('checkboxGroup1') == 'park' else 'Двір'
+
+            if car_view == "Паркінг":
+                data_new_obj = {
+                    "Owner_Key": "dc454ae6-83f2-11ee-a666-7cfe9013d29e",
+                    "Description": number_car_place,
+                    "Этаж": 0,
+                    "Подъезд_Key": "00000000-0000-0000-0000-000000000000",
+                    "Суффикс": new_post_data.get('pitnum'),
+                    "КоличествоКомнат": 0,
+                    "ЖилойФонд": "НеЖилой",
+                    "Паркинг": True,
+                    "Префикс": "",
+                    "ДополнительныеРеквизиты": []
+                }
+                response_obj = osbb.post_new_obj(data_new_obj)
+
+                lich_response = osbb.get_lich_user(self.request.user.username)
+                desc_lic = ''
+                for i in lich_response:
+                    if i['code'] == lich:
+                        desc_lic = i.get('code2')
+                data = {"КодЗдания": "000000001", "RefObj": number_car_place, "ОрганизацияКод": "00-000001",
+                        'Owner': self.request.user.username, 'Description': desc_lic}
+                response_user = osbb.get_user_by_username(self.request.user.username)
+                response = osbb.post_new_lic(data)
+
+
+                data = {"Логин": self.request.user.username, "Пароль": response_user.get('Пароль')}
+                osbb.patch_user(response_user.get('Ref_Key'), data)
+
+
+
             if response:
                 return JsonResponse({'status': 'success'})
             else:
-                return JsonResponse({'status': 'error'})
+                return JsonResponse({'status': 'Показання не додані'})
 
         from django.http import HttpResponseRedirect
         return HttpResponseRedirect(request.path)
@@ -1298,15 +1474,82 @@ class DocsView(LoginRequiredMixin, TemplateView):
 class SupportView(LoginRequiredMixin, TemplateView):
     template_name = 'support.html'
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['user'] = self.request.user
+
+
+        lich_code = self.request.session.get('lich')
+        lich_response = osbb.get_lic_odata()
+        lich_ref = None
+        for i in lich_response:
+            if i['Code'] == str(lich_code):
+                lich_ref = i['Description']
+
+        support_response = osbb.get_tickets(lich_ref)
+        tickets = []
+        for ticket in support_response:
+            status_odata = ticket.get('СтатусЗаявки')
+            status = 'Нова Заявка'
+            if status_odata == 'НоваяЗаявка':
+                status = 'Нова заявка'
+            elif status_odata == 'Принята':
+                status = 'Прийнята'
+            elif status_odata == 'Отменена':
+                status = 'Скасована'
+            elif status_odata == 'Выполнена':
+                status = 'Виконана'
+            formatted_date_time_str = ticket.get('Date').replace('T', ' ')
+            dict = {
+
+                "Date": formatted_date_time_str,
+                "Status": status,
+                "Text": ticket.get('ТекстЗаявки')
+            }
+            tickets.append(dict)
+        context['tickets'] = tickets
+        return context
     def post(self, request, *args, **kwargs):
         category = request.POST.get('category')
         description = request.POST.get('comments')
-        if category and description:
-            SupportTicket.objects.create(category=category, description=description, from_user=self.request.user.username)
+        try:
+            if category:
+                SupportTicket.objects.create(category=category, description=description, from_user=self.request.user.username)
 
-            messages.success(request, _('Ваш тікет успішно відправлено.'))
-        else:
-            messages.error(request, 'Помилка під час надсилання форми. Будь ласка, заповніть усі поля.')
+                messages.success(request, 'Ваш тікет успішно відправлено.')
+            else:
+                messages.error(request, 'Помилка під час надсилання форми. Будь ласка, заповніть усі поля.')
+        except Exception as e:
+            pass
+        now = datetime.now()
+        formatted_datetime = now.strftime('%Y-%m-%dT%H:%M:%S')
+        response_user = osbb.get_user_by_username(self.request.user.username)
+        lich_code = self.request.session.get('lich')
+        lich_response = osbb.get_lic_odata()
+        lich_ref = None
+        for i in lich_response:
+            if i['Code'] == str(lich_code):
+                lich_ref = i['Ref_Key']
+        data = {
+            "Date": formatted_datetime,
+            "ВидЗаявки": "Обычная",
+            "ВидОперации": "ПроведениеРаботПоЛицевомуСчету",
+             "Заказчик_Key":  response_user.get('Ref_Key'),
+            "Здание_Key": "dc454ae6-83f2-11ee-a666-7cfe9013d29e",
+            "Комментарий": "",
+            "КомментарийПоВыполнениюЗаявки": "",
+             "ЛицевойСчет_Key": lich_ref,
+            "Организация_Key": "cf0e4aa9-83ea-11ee-a666-7cfe9013d29e",
+            "ОтветственныйЗаПроведениеРемонта_Key": "00000000-0000-0000-0000-000000000000",
+            "ОценкаПроведенияРемонта": "",
+            "Склад_Key": "00000000-0000-0000-0000-000000000000",
+            "СтатусЗаявки": "НоваяЗаявка",
+            "СуммаДокумента": 0,
+            "ТекстЗаявки":description,
+            "Телефон": "",
+            "Работы": [],
+            "Запасы": []}
+        response_ticket = osbb.post_new_ticket(data)
 
         return redirect('support')
 
@@ -1453,10 +1696,11 @@ class PasswordResetView(GuestOnlyView, FormView):
 
         self.request.session['reset_code'] = code
         self.request.session['reset_user_ref'] = ref_key
+        self.request.session['phone'] = phone
 
 
         message = f'Ваш код для сброса пароля: {code}'
-        response_sms = send_sms(phone, message)
+        response_sms = kyivstar_api.send_sms('messagedesk',  phone, message)
         if response_sms:
             return redirect('verify_reset_code')
         else:
@@ -1481,6 +1725,32 @@ class VerifyResetCodeView(GuestOnlyView, FormView):
             return redirect('reset_password')
         else:
             return self.render_to_response(self.get_context_data(form=form, error='Невірний код підтвердження'))
+
+    def resend_sms(self, request):
+        current_time = datetime.now()
+        last_sent_time = self.request.session.get('last_sent_time')
+        if last_sent_time:
+            last_sent_time = datetime.fromisoformat(last_sent_time)
+            if current_time < last_sent_time + timedelta(minutes=5):
+                return JsonResponse({'error': 'Будь ласка, зачекайте перед повторним відправленням SMS.'}, status=400)
+
+        code = ''.join(random.choices('0123456789', k=6))
+
+        self.request.session['reset_code'] = code
+
+        message = f'Ваш код для сброса пароля: {code}'
+        # Send SMS using Kyivstar API
+        response_sms = kyivstar_api.send_sms('messagedesk',  self.request.session.get('phone'), message)
+
+        # Update session with new reset code and time
+        self.request.session['reset_code'] = code  # This should be the actual code sent
+
+        return JsonResponse({'message': 'SMS sent successfully.'})
+
+    def get(self, request, *args, **kwargs):
+        if 'resend_sms' in request.GET:
+            return self.resend_sms(request)
+        return super().get(request, *args, **kwargs)
 
 
 class ResetPasswordView(GuestOnlyView, FormView):
