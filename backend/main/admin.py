@@ -17,18 +17,26 @@ class EnvFileAdmin(admin.ModelAdmin):
         return custom_urls + urls
 
     def save_env(self, request):
-        if request.method == 'POST':
-            content = request.POST['content']
-            with open('.env', 'w') as f:
-                f.write(content)
-            self.restart_server()
-            self.message_user(request, "Environment file updated and server restarted.")
-            return HttpResponseRedirect("../")
+        try:
+            if request.method == 'POST':
+                content = request.POST['content']
+                with open('.env', 'w') as f:
+                    f.write(content)
+                self.restart_server()
+                self.message_user(request, "Environment file updated and server restarted.")
+                return HttpResponseRedirect("../")
+        except Exception as e:
+            print(f"Error {e}")
 
     def restart_server(self):
-        import os
-        subprocess.Popen(["sudo", "systemctl", "restart", "gunicorn"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        return True
+        try:
+            import os
+            subprocess.Popen(["sudo", "systemctl", "restart", "gunicorn"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            return True
+        except Exception as e:
+            print(f"Error2 {e}")
+            import os
+            os.system("sudo systemctl restart gunicorn")
 
     def changelist_view(self, request, extra_context=None):
         # Ensure we load the content of the .env file when we load the change list page
