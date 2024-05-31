@@ -1,7 +1,43 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import CustomUser, Poll, Choice, Vote, PhotoModel, SupportTicket, BackgroundModel, DIA
+from .models import CustomUser, Poll, Choice, Vote, PhotoModel, SupportTicket, BackgroundModel, DIA, EnvFile
+from django.http import HttpResponseRedirect
+from django.urls import path
+import subprocess
 
+
+class EnvFileAdmin(admin.ModelAdmin):
+    change_list_template = "admin/envfile_change_list.html"
+
+    def get_urls(self):
+        urls = super().get_urls()
+        custom_urls = [
+            path('save_env/', self.admin_site.admin_view(self.save_env), name='save_env')
+        ]
+        return custom_urls + urls
+
+    def save_env(self, request):
+        if request.method == 'POST':
+            content = request.POST['content']
+            with open('.env', 'w') as f:
+                f.write(content)
+            self.restart_server()
+            self.message_user(request, "Environment file updated and server restarted.")
+            return HttpResponseRedirect("../")
+
+    def restart_server(self):
+        import os
+        subprocess.Popen(["sudo", "systemctl", "restart", "gunicorn"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        return True
+
+    def changelist_view(self, request, extra_context=None):
+        # Ensure we load the content of the .env file when we load the change list page
+        extra_context = extra_context or {}
+        with open('.env', 'r') as f:
+            extra_context['content'] = f.read()
+        return super().changelist_view(request, extra_context=extra_context)
+
+admin.site.register(EnvFile, EnvFileAdmin)
 class CustomUserAdmin(UserAdmin):
     list_display = ('username', 'email', 'first_name', 'last_name', 'is_staff', 'profile_picture')
 

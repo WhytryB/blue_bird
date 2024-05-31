@@ -20,6 +20,13 @@ class CustomUser(AbstractUser):
         return full_name if full_name.strip() else self.username
 
 
+class EnvFile(models.Model):
+    content = models.TextField()
+
+    def __str__(self):
+        return "Environment Configuration"
+
+
 class Poll(models.Model):
     text = models.TextField()
     pub_date = models.DateTimeField(default=timezone.now)
