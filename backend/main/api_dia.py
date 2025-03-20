@@ -109,6 +109,7 @@ class DIA:
         self.check_headers()
 
         response = self.session.get(f"{DIA_HOST}/api/v2/acquirers/branches", headers=self.headers)
+        
         response = self.perform_resopnse_api(response)
         return response
 

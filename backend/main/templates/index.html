@@ -195,11 +195,14 @@
                                 <div class="card-body" id="tabs-v3">
 
                                     <ul style=" overflow-x: auto; white-space: nowrap; " class="tab-navigation inline pill">
+                                        <li><a href="#tabs3">2025 Разрахунок</a></li>
                                         <li><a href="#tabs1">2024 Разрахунок</a></li>
                                         <li><a href="#tabs2">2023 Разрахунок</a></li>
+                                        
 
                                     </ul>
                                     <div style="    width: 100%; height: 400px; /* Задайте желаемую высоту */">
+                                        <canvas id="tabs3" class="pt-20px"></canvas>
                                         <canvas id="tabs1" class="pt-20px"></canvas>
                                         <canvas id="tabs2" class="pt-20px"></canvas>
 
@@ -408,6 +411,48 @@
                 data: {
                     labels: {{available_months_list_2024|safe}},
                     datasets: {{yslygi_2024_chart|safe}}
+                },
+                options: {
+                    scales: {
+                        x: {
+                            stacked: true
+                        },
+                        y: {
+                            stacked: true
+                        }
+                    },
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                        },
+                        zoom: {
+                            pan: {
+                                enabled: true,
+                                mode: 'x', // Разрешить горизонтальное прокручивание
+                            },
+                            zoom: {
+                                wheel: {
+                                    enabled: true,
+                                  },
+                                pinch: {
+                                    enabled: true
+                                  },
+                                enabled: true,
+                                mode: 'x', // Разрешить горизонтальное масштабирование
+                            }
+                        }
+                    }
+                },
+            });
+
+            
+            new Chart(document.getElementById('tabs3'), {
+                type: 'bar',
+                data: {
+                    labels: {{available_months_list_2025|safe}},
+                    datasets: {{yslygi_2025_chart|safe}}
                 },
                 options: {
                     scales: {

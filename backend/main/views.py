@@ -32,7 +32,6 @@ from .models import Poll, Choice, Vote, SupportTicket, BackgroundModel, DIA as D
 from django.urls import reverse_lazy
 from .onec import OSBB
 from collections import defaultdict
-import calendar
 import re
 import random
 import locale
@@ -63,6 +62,21 @@ def mark_notifications_as_read(request):
 
 class HomeView(LoginRequiredMixin, TemplateView):
     template_name = 'index.html'
+
+    ukr_month_names = {
+        1: 'Січень',
+        2: 'Лютий',
+        3: 'Березень',
+        4: 'Квітень', 
+        5: 'Травень',
+        6: 'Червень',
+        7: 'Липень',
+        8: 'Серпень',
+        9: 'Вересень',
+        10: 'Жовтень',
+        11: 'Листопад',
+        12: 'Грудень'
+    }
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -119,6 +133,7 @@ class HomeView(LoginRequiredMixin, TemplateView):
 
 
             raschet_response = osbb.get_raschet_user(context['lich_selected'])
+            
             if raschet_response:
                 dolg = raschet_response['Долг']
                 raschet = raschet_response['Расчёт']
@@ -133,8 +148,10 @@ class HomeView(LoginRequiredMixin, TemplateView):
                     date_str = entry["Период"].split()[0]
                     date = datetime.strptime(date_str, "%d.%m.%Y")
                     month_key = date.strftime("%Y-%m")
-                    month_name = f"{date.year} {calendar.month_name[date.month].capitalize()}"
-                    second_month_name = f"{calendar.month_name[date.month].capitalize()} {date.year}"
+                    month_number = date.month
+                    month_name_ukr = HomeView.ukr_month_names[month_number] 
+                    month_name = f"{date.year} {month_name_ukr.capitalize()}"
+                    second_month_name = f"{month_name_ukr.capitalize()} {date.year}"
 
                     service_name = entry["Услуга"]
                     #TO-DO првоерить почему услуга пустая
@@ -214,7 +231,9 @@ class HomeView(LoginRequiredMixin, TemplateView):
                     date_str = dolg_data["МесяцНачисления"].split()[0]
                     date = datetime.strptime(date_str, "%d.%m.%Y")
                     month_key = date.strftime("%Y-%m")
-                    month_name = f"{date.year} {calendar.month_name[date.month].capitalize()}"
+                    month_number = date.month
+                    month_name_ukr = HomeView.ukr_month_names[month_number] 
+                    month_name = f"{date.year} {month_name_ukr.capitalize()}"
                     service_name = dolg_data["Услуга"]
                     oplata = round(float(re.sub(r'[^\d.,]', '', dolg_data["СуммаОстаток"]).replace(',', '.')), 2)
 
@@ -242,6 +261,49 @@ class HomeView(LoginRequiredMixin, TemplateView):
 
                 sorted_data = {}
                 dates = []
+
+                formatted_data_2025 = [
+                    {
+                        "label": "Електроенергія",
+                        "data": [],
+                        "borderWidth": 1,
+                        "hoverOffset": 4,
+                        "name": "Електроенергія",
+                        "year": 2025,
+                        "backgroundColor": "rgba(255, 206, 86, 0.2)",
+                        "borderColor": "rgba(255, 206, 86, 1)"
+                    },
+                    {
+                        "label": "Холодна вода",
+                        "data": [],
+                        "borderWidth": 1,
+                        "hoverOffset": 4,
+                        "name": "Холодна вода",
+                        "year": 2025,
+                        "backgroundColor": "rgba(153, 102, 255, 0.2)",
+                        "borderColor": "rgba(153, 102, 255, 1)"
+                    },
+                    {
+                        "label": "Опалення",
+                        "data": [],
+                        "borderWidth": 1,
+                        "hoverOffset": 4,
+                        "name": "Опалення",
+                        "year": 2025,
+                        "backgroundColor": "rgba(255, 99, 132, 0.2)",
+                        "borderColor": "rgba(255, 99, 132, 1)"
+                    },
+                    {
+                        "label": "Інше",
+                        "data": [],
+                        "borderWidth": 1,
+                        "hoverOffset": 4,
+                        "name": "Інше",
+                        "year": 2025,
+                        "backgroundColor": 'rgba(75, 192, 192, 0.2)',
+                        "borderColor": 'rgba(75, 192, 192, 1)'
+                    },
+                ]
 
                 formatted_data_2023 = [
                                {
@@ -350,6 +412,7 @@ class HomeView(LoginRequiredMixin, TemplateView):
 
                 # Получение месяцев для 2024 года
                 result_months_2024 = []
+                result_months_2025 = []
 
                 for entry in result_list:
                     try:
@@ -386,6 +449,8 @@ class HomeView(LoginRequiredMixin, TemplateView):
                                         formatted_data_2024[pos]['data'].append(service_money)
                                     elif '2023' in month:
                                         formatted_data_2023[pos]['data'].append(service_money)
+                                    elif '2025' in month:
+                                        formatted_data_2025[pos]['data'].append(service_money)
 
 
 
@@ -411,6 +476,15 @@ class HomeView(LoginRequiredMixin, TemplateView):
                                     formatted_data_2023[2]['data'].append(0)
                                 formatted_data_2023[3]['data'].append(money_give)
                                 result_months_2023.append(month_ukr_name)
+                            elif '2025' in month:
+                                if not is_water:
+                                    formatted_data_2025[1]['data'].append(0)
+                                if not is_svet:
+                                    formatted_data_2025[0]['data'].append(0)
+                                if not is_otop:
+                                    formatted_data_2025[2]['data'].append(0)
+                                formatted_data_2025[3]['data'].append(money_give)
+                                result_months_2025.append(month_ukr_name)
                     except Exception as e:
                         pass
 
@@ -424,10 +498,11 @@ class HomeView(LoginRequiredMixin, TemplateView):
 
                 context['yslygi_2023_chart'] = formatted_data_2023
                 context['yslygi_2024_chart'] = formatted_data_2024
-
+                context['yslygi_2025_chart'] = formatted_data_2025  
                 context['available_months_list_2023'] = result_months_2023
                 context['available_months_list_2024'] = result_months_2024
-
+                context['available_months_list_2025'] = result_months_2025  
+                
 
 
         else:
@@ -647,15 +722,18 @@ class CountersView(LoginRequiredMixin, TemplateView):
             while current_date <= datetime.now():
                 date_range.append(current_date.replace(day=1))
                 if current_date.month == 12:
-                    current_date = current_date.replace(year=current_date.year + 1, month=1)
+                    current_date = datetime(current_date.year + 1, 1, 1)
                 else:
-                    current_date = current_date.replace(month=current_date.month + 1)
+                    next_month = current_date.month + 1
+                    current_date = datetime(current_date.year, next_month, 1)
 
             formatted_data = {}
             for priboru_key in pribory_response_list:
                 for data_motn in date_range:
                     name_key = priboru_key['ПриборУчета']
-                    month_key = f"{data_motn.year} {calendar.month_name[data_motn.month].capitalize()}"
+                    month_number = data_motn.month
+                    month_name_ukr = HomeView.ukr_month_names[month_number] 
+                    month_key = f"{data_motn.year} {month_name_ukr.capitalize()}"
                     added_data = None
                     current_pribor_data = sorted_data.get(name_key)
                     if current_pribor_data:
@@ -664,7 +742,9 @@ class CountersView(LoginRequiredMixin, TemplateView):
 
                         for entry in current_pribor_data:
                             period = parse_date(entry["Период"])
-                            period_str = f"{period.year} {calendar.month_name[period.month].capitalize()}"
+                            month_number = period.month
+                            month_name_ukr = HomeView.ukr_month_names[month_number] 
+                            period_str = f"{period.year} {month_name_ukr.capitalize()}"
 
                             if period_str == month_key:
                                 if max_date <= period_str:
@@ -676,16 +756,19 @@ class CountersView(LoginRequiredMixin, TemplateView):
                                 else:
                                     number, name = temp_entry_list
                                 data_key_temp = data_motn - timedelta(days=data_motn.day)
-                                month_key_temp = f"{data_key_temp.year} {calendar.month_name[data_key_temp.month].capitalize()}"
+                                month_number = data_key_temp.month
+                                month_name_ukr = HomeView.ukr_month_names[month_number] 
+                                month_key_temp = f"{data_key_temp.year} {month_name_ukr.capitalize()}"
 
                                 prev_month_data = formatted_data.get(month_key_temp, [])
                                 pokaz_prev = 0
                                 for i in prev_month_data:
                                     if i["ПриборУчета"] == entry["ПриборУчета"]:
                                         pokaz_prev = i["Pokaz"]
-
-                                month_name = f"{data_motn.year} {calendar.month_name[data_motn.month].capitalize()}"
-                                month_temp = period.strftime('%Y-%02m-%02d')
+                                month_number = data_motn.month
+                                month_name_ukr = HomeView.ukr_month_names[month_number] 
+                                month_name = f"{data_motn.year} {month_name_ukr.capitalize()}"
+                                month_temp = f"{period.year}-{period.month:02d}-{period.day:02d}"
 
                                 data = {
                                     "Month":  month_temp,
@@ -712,9 +795,13 @@ class CountersView(LoginRequiredMixin, TemplateView):
                         else:
                             number, name = temp_entry_list
                         data_key_temp = data_motn - timedelta(days=data_motn.day)
-                        month_key_temp = f"{data_key_temp.year} {calendar.month_name[data_key_temp.month].capitalize()}"
+                        month_number = data_key_temp.month
+                        month_name_ukr = HomeView.ukr_month_names[month_number] 
+                        month_key_temp = f"{data_key_temp.year} {month_name_ukr.capitalize()}"
                         prev_month_data = formatted_data.get(month_key_temp, [])
-                        month_name = f"{data_motn.year} {calendar.month_name[data_motn.month].capitalize()}"
+                        month_number = data_motn.month
+                        month_name_ukr = HomeView.ukr_month_names[month_number] 
+                        month_name = f"{data_motn.year} {month_name_ukr.capitalize()}"
                         pokaz_prev = 0
                         for i in prev_month_data:
                             if i["ПриборУчета"] == current_pribor_data[0]["ПриборУчета"]:
@@ -726,7 +813,7 @@ class CountersView(LoginRequiredMixin, TemplateView):
                         if current_month == data_motn.month:
                             month_temp = datetime.now().strftime('%Y-%m-%d')
                         else:
-                            month_temp = data_motn.strftime('%Y-%02m') + "-01"
+                            month_temp = f"{data_motn.year}-{data_motn.month:02d}-01"
                         data = {
                             "Month":  month_temp,
                             "Name": name,
@@ -1170,8 +1257,9 @@ class VoteView(LoginRequiredMixin, TemplateView):
 
             votes_response = osbb.get_votes()
             votes_result_response = osbb.get_votes_result()
+            poll_data = []
             if votes_response:
-                poll_data = []
+                
                 for data_vote in votes_response:
                     number = data_vote.get('Number')
                     head_text = data_vote.get('ШапкаИнформационногоБюлетня')
@@ -1181,9 +1269,10 @@ class VoteView(LoginRequiredMixin, TemplateView):
                         # Запись не найдена, создаем новую
                         poll = Poll.objects.create(text=number + head_text)
                     result_votes = None
-                    for i in votes_result_response:
-                        if i['Вопрос'] == data_vote['ВопросГолосования']['Description']:
-                            result_votes = i
+                    if votes_result_response:
+                        for i in votes_result_response:
+                            if i['Вопрос'] == data_vote['ВопросГолосования']['Description']:
+                                result_votes = i
 
                     # Общее количество ответов
 
@@ -1219,7 +1308,7 @@ class VoteView(LoginRequiredMixin, TemplateView):
                             field_name = field
                         # Добавляем результат в список
                         result_list.append({'имя': field_name, 'варианты': count, 'проценты': percentage})
-
+                    
                     poll_dict = {"Poll_data": poll, "head_text": head_text,
                                  "ФормаГолос": data_vote['ФормаГолосования']['Description'],
                                  "Data": data_vote['Date'],
@@ -1271,7 +1360,7 @@ class VoteView(LoginRequiredMixin, TemplateView):
                 finded_doc = None
 
                 for i in votes_doc:
-
+                    
                     number = i['ДокументОснование'].get('Number')
                     head_text = i['ДокументОснование'].get('ШапкаИнформационногоБюлетня')
 
